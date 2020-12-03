@@ -1,0 +1,53 @@
+<div class="row bgcolor1 anniehead">
+  <div class="col-xs-9">
+    <h3 class="">
+      <img src="ANNIE-01.png" alt="Annie." title="Annie." class="img-responsive" style="max-height: 80px;" height="80">
+      <!-- span data-ng-bind="i18n.headline.tag[lang]"></span -->
+    </h3>
+  </div>
+  <div class="col-xs-3 text-right">
+    <p>&nbsp;</p>
+    <p>
+      <span class="btn-group">
+        <a href="#" data-ng-repeat="(l,s) in languages track by $index" data-ng-show="(languages | keylength)>1"
+         class="btn color0" data-ng-class="{'bgcolor3':$parent.lang==l}" data-ng-href="?lang={{l}}" title="{{s}}">&nbsp;{{l}}&nbsp;</a>
+      </span>
+      &nbsp;&nbsp;
+      <a href="#" data-toggle="modal" data-target="#userInfoModal"><i class="fa fa-user fa-2x"></i>&nbsp;<span data-ng-bind="auth.firstname"></span></a>
+    </p>
+  </div>
+</div>
+
+<div class="modal fade" id="userInfoModal" role="dialog">
+  <div class="modal-dialog modal-md">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title">
+          <span data-ng-bind="auth.firstname"></span>&nbsp;<span data-ng-bind="auth.lastname"></span>
+        </h4>
+        <h5>
+          <small data-ng-bind="auth.uid"></small>
+          <br>
+          <span data-ng-bind="role" data-ng-init="roleparts=auth.role.split(';'); role=roleparts[roleparts.length-1];"></span>
+        </h5>
+      </div>
+      <div class="modal-body">
+        <p>
+          <span data-ng-bind="auth.school"></span>
+          <br>
+          <small><span data-ng-bind="school[lang]"></span> (<span data-ng-bind="auth.schoolCode"></span>)</small>
+        </p>
+        <p><span data-ng-bind="municipality[lang]"></span> <small>(<span data-ng-bind="auth.municipalityCode"></span>)</small></p>
+        <p><span data-ng-bind="auth.class"></span></p>
+        <p><small data-ng-repeat="r in auth.role.split(';')">/<span data-ng-bind="r"></span></small></p>
+        <p><small data-ng-bind="auth.cid"></small></p>
+        <p><small data-ng-bind="auth.cide"></small></p>
+      </div>
+      <div class="modal-footer">
+        <a href="#" class="btn btn-default" data-ng-href="{{auth.logouturl}}"><i class="fa fa-sign-out fa-2x"></i>&nbsp;<span data-ng-bind="i18n.headline.logout[lang]"></span></a>
+      </div>
+    </div>
+
+  </div>
+</div>

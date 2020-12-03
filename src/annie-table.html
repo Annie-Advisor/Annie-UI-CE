@@ -1,0 +1,184 @@
+<div class="row bgcolor1 annietable">
+  <div class="col-md-4 col-sm-3 hidden-xs">
+  </div>
+  <div class="col-md-4 col-sm-6 col-xs-12 text-center">
+    <h4>
+      <span data-ng-bind="counts.studentsok"></span>
+      <span data-ng-bind="{fi:'/',en:'of'}[lang]"></span>
+      <span data-ng-bind="counts.students"></span>
+      <span data-ng-bind="i18n.headline.body[lang]"></span>
+      <br><br>
+      <div class="progress bgcolor3" style="height:1vh;">
+        <div class="progress-bar progress-bar-success" role="progressbar"
+         style="width: {{100*counts.studentsok/counts.students}}%;"
+         aria-valuenow="{{counts.studentsok}}" aria-valuemin="0" aria-valuemax="{{counts.students}}"></div>
+      </div>
+    </h4>
+  </div>
+  <div class="col-md-1 col-sm-3 hidden-xs">
+  </div>
+  <div class="col-md-3 form-horizontal">
+    <input type="text" class="form-control input-sm" data-ng-model="search" placeholder="{{i18n.content.search[lang]}}" data-ng-change="resetPagination()">
+  </div>
+</div>
+<div class="row bgcolor1">
+  <div class="col-xs-10 form-horizontal">
+  </div>
+  <div class="col-xs-2 text-right">
+    <i class="fa fa-refresh fa-2x color3" data-ng-class="{'fa-spin': loading}" data-ng-click="getSupportNeeds()"></i>
+    <a href="#" data-toggle="modal" data-target="#settingsInfoModal"><i class="fa fa-cog fa-2x"></i></a>
+  </div>
+</div>
+<div class="row bgcolor1 annietable">
+  <div class="col-xs-12">
+    <table class="table table-striped table-responsive table-hover">
+      <thead>
+        <tr>
+          <th data-ng-repeat="c in columns.contactArr | orderBy:'i'" data-ng-show="c.on">
+            <span data-ng-click="changeOrder('contactdata.'+c.a)">
+              <span data-ng-bind="c[lang]"></span>
+              <i class="fa" data-ng-class="{'fa-caret-down':order[0]=='contactdata.'+c.a, 'fa-caret-up':order[0]=='-contactdata.'+c.a}"></i>
+            </span>
+          </th>
+          <!--survey, category, userrole & status :: these are SEPARATED and not looped below (x2) -->
+          <th data-ng-repeat="c in columns.supportneedArr | orderBy:'i'" data-ng-show="c.on">
+            <span data-ng-click="changeOrder(c.a)">
+              <span data-ng-bind="c[lang]"></span>
+              <i class="fa" data-ng-class="{'fa-caret-down':order[0]==c.a, 'fa-caret-up':order[0]=='-'+c.a}"></i>
+            </span>
+          </th>
+        </tr>
+        <tr>
+          <td data-ng-repeat="c in columns.contactArr | orderBy:'i'" data-ng-show="c.on && c.a!='degree' && c.a!='group' && c.a!='location'"></td>
+          <!-- multiselects last, options for all are set up in contoller -->
+          <!-- contact: degree & group & location :: must be separated from contacts for some reason (above or previous TD, scoping i suppose) -->
+          <td data-ng-show="columns.contact.degree.on">
+            <select id="multiselectDegree" data-ng-model="choices.degree" multiple="multiple" data-ng-change="resetPagination()"></select>
+          </td>
+          <td data-ng-show="columns.contact.group.on">
+            <select id="multiselectGroup" data-ng-model="choices.group" multiple="multiple" data-ng-change="resetPagination()"></select>
+          </td>
+          <td data-ng-show="columns.contact.location.on">
+            <select id="multiselectLocation" data-ng-model="choices.location" multiple="multiple" data-ng-change="resetPagination()"></select>
+          </td>
+          <!-- supportneed: survey, category, userrole & status :: separate for different outputs and clarity -->
+          <td data-ng-show="columns.supportneed.survey.on">
+            <select id="multiselectSurvey" data-ng-model="choices.survey" multiple="multiple" data-ng-change="resetPagination()"></select>
+          </td>
+          <td data-ng-show="columns.supportneed.category.on">
+            <select id="multiselectCategory" data-ng-model="choices.category" multiple="multiple" data-ng-change="resetPagination()"></select>
+          </td>
+          <td data-ng-show="columns.supportneed.userrole.on">
+            <select id="multiselectUserrole" data-ng-model="choices.userrole" multiple="multiple" data-ng-change="resetPagination()"></select>
+          </td>
+          <td data-ng-show="columns.supportneed.status.on"><!-- initially ALL selected -->
+            <select id="multiselectStatus" data-ng-model="choices.status" multiple="multiple" data-ng-change="resetPagination()"></select>
+          </td>
+        </tr>
+      </thead>
+      <tbody>
+        <tr data-ng-repeat="n in supportneedspage"
+        data-ng-click="$parent.showBooking(n.contact,n.contactdata,n)" data-toggle="modal" data-target="#bookingModal">
+          <td data-ng-repeat="c in columns.contactArr | orderBy:'i'" data-ng-show="c.on"
+           data-ng-bind="format(n.contactdata[c.a],c.t)"></td>
+          <!-- survey, category, userrole & status :: separate for different outputs and clarity -->
+          <td data-ng-show="columns.supportneed.survey.on">
+            <span data-ng-bind="format(n.survey,'survey')"></span>
+          </td>
+          <td data-ng-show="columns.supportneed.category.on">
+            <a href="#" class="color3">
+              <span data-ng-bind="format(n.category,'category')"></span>
+            </a>
+          </td>
+          <td data-ng-show="columns.supportneed.userrole.on">
+            <a href="#" class="color3">
+              <span data-ng-bind="format(n.userrole,'userrole')"></span>
+            </a>
+          </td>
+          <td data-ng-show="columns.supportneed.status.on">
+            <a href="#" class="color0">
+              <i class="fa" style="font-size: 125%;"
+               data-ng-class="{'fa-exclamation-circle':n.status=='1', 'fa-question-circle':n.status=='2', 'fa-check-circle':n.status=='100', 'color3':n.status=='1', 'color5':n.status=='2', 'color4':n.status=='100'}"
+               title="{{format(n.status,'supportNeedStatus')}}"></i> <span data-ng-bind="format(n.status,'supportNeedStatus')"></span>
+            </a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+<div class="row bgcolor1">
+  <div class="col-xs-12 text-center">
+    <span data-ng-bind="(((currentPage-1)*itemsPerPage)+1)"></span>&ndash;<span data-ng-bind="Math.min(totalItems,currentPage*itemsPerPage)"></span>
+    <span data-ng-bind="{fi:'/',en:'of'}[lang]"></span>
+    <span data-ng-bind="format(totalItems,'number')" data-ng-init="totalItems=counts.studentsok; numPages=Math.ceil(totalItems/itemsPerPage)"></span>
+    <span class="btn" data-ng-class="{'disabled':currentPage<=1}" data-ng-click="setPage(currentPage-1)">
+      <a href="#" class="color3" data-ng-if="currentPage>1"><strong>&lt;</strong></a>
+      <span data-ng-if="currentPage<=1">&lt;</span>
+    </span>
+    <span class="btn" data-ng-class="{'disabled':currentPage>=numPages}" data-ng-click="setPage(currentPage+1)">
+      <a href="#" class="color3" data-ng-if="currentPage<numPages"><strong>&gt;</strong></a>
+      <span data-ng-if="currentPage>=numPages">&gt;</span>
+    </span>
+  </div>
+</div>
+
+
+<div class="modal fade" id="settingsInfoModal" role="dialog">
+  <div class="modal-dialog modal-md">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title" data-ng-bind="i18n.headline.config[lang]"></h4>
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-xs-3">
+            <span data-ng-bind="i18n.headline.config.itemsPerPage[lang]"></span>
+          </div>
+          <div class="col-xs-8">
+            <input type="range" class="slider" min="10" max="100" step="10" data-ng-model="itemsPerPage" data-ng-change="setItemsPerPage(itemsPerPage)" title="{{itemsPerPage}}">
+          </div>
+          <div class="col-xs-1">
+             (<span data-ng-bind="itemsPerPage"></span>)
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-xs-3">
+            <span data-ng-bind="i18n.headline.config.updateInterval[lang]"></span>
+          </div>
+          <div class="col-xs-8">
+            <input type="range" class="slider" min="5" max="125" step="15" data-ng-model="updateInterval" data-ng-change="setUpdateInterval(updateInterval)" title="{{updateInterval}}">
+          </div>
+          <div class="col-xs-1">
+             (<span data-ng-bind="updateInterval"></span>)
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-xs-3">
+            <span data-ng-bind="i18n.content.setting.column[lang]"></span>
+          </div>
+          <div class="col-xs-9">
+            <p data-ng-repeat="c in columns.contactArr | orderBy:'i'">
+              <span data-ng-click="setColumnOn('contact',c,!c.on)">
+                <i class="fa" data-ng-class="{'fa-check-square-o': c.on, 'fa-square-o': !c.on}"></i>
+                <span data-ng-bind="c[lang]"></span>
+              </span>
+            </p>
+            <p data-ng-repeat="c in columns.supportneedArr | orderBy:'i'">
+              <span data-ng-click="setColumnOn('supportneed',c,!c.on)">
+                <i class="fa" data-ng-class="{'fa-check-square-o': c.on, 'fa-square-o': !c.on}"></i>
+                <span data-ng-bind="c[lang]"></span>
+              </span>
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-warning" data-ng-click="resetConfig()">Palauta asetukset</button>
+        <button class="btn btn-primary" data-dismiss="modal">Sulje</button>
+      </div>
+    </div>
+
+  </div>
+</div>

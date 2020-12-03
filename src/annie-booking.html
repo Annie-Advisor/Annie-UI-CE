@@ -1,0 +1,165 @@
+<div class="modal fade" role="dialog" id="bookingModal">
+<div class="modal-dialog modal-lg">
+<div class="modal-content">
+
+<div class="modal-header">
+  <div class="row">
+    <div class="col-xs-9">
+      <h4 data-ng-bind="i18n.booking.head[lang]"></h4>
+    </div>
+    <div class="col-xs-3">
+      <button type="button" class="close" data-dismiss="modal">&times;</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-body">
+
+  <div class="row">
+    <div class="col-xs-6">
+      <h4 data-ng-bind="i18n.booking.student[lang]"></h4>
+      <p>
+        <span title="{{i18n.booking.student[lang]}}">
+          <i class="fa fa-user"></i>
+          <span data-ng-bind="selected.contact.firstname"></span>
+          <span data-ng-bind="selected.contact.lastname"></span>
+        </span>
+        <br>
+        <span title="{{i18n.booking.degree[lang]}}">
+          <i class="fa fa-certificate"></i>
+          <span data-ng-bind="format(selected.contact.degree,'text')"></span>
+        </span>
+        <br>
+        <span title="{{i18n.booking.group[lang]}}">
+          <i class="fa fa-group"></i>
+          <span data-ng-bind="format(selected.contact.group,'text')"></span>
+        </span>
+        <br>
+        <span title="{{i18n.booking.location[lang]}}">
+          <i class="fa fa-map-marker"></i>
+          <span data-ng-bind="format(selected.contact.location,'text')"></span>
+        </span>
+        <span title="{{i18n.booking.email.send[lang]}}" data-ng-show="selected.contact.email">
+          <br>
+          <a target="_top" href="mailto:{{selected.contact.email}}">
+            <i class="fa fa-envelope"></i>
+            <span data-ng-bind="selected.contact.email"></span>
+          </a>
+        </span>
+        <br>
+        <span title="{{i18n.booking.phonenumber[lang]}}">
+          <i class="fa fa-phone"></i>
+          <span data-ng-bind="format(selected.contact.phonenumber,'phonenumber')"></span>
+          <!-- todo: send sms -->
+          <div data-ng-show="smsSendEnabled">
+            <i class="fa" data-ng-class="{'fa-toggle-down':showSendSMS, 'fa-toggle-up':!showSendSMS}"
+            data-ng-click="showSendSMS=!showSendSMS" title="{{i18n.booking.sms.open[lang]}}"
+            ></i>
+            <div id="sendSMS" data-ng-hide="showSendSMS" class="form-group">
+              <form class="form">
+                <textarea class="form-control rounded-0" style="max-width: 100%;" rows="3" data-ng-model="smsMessage" placeholder="{{i18n.booking.sms.type[lang]}}" data-ng-disabled="selected.supportneed.surveystatus!='100'"></textarea>
+                <br>
+                <button class="btn btn-primary" data-ng-bind="selected.supportneed.surveystatus!='100' ? i18n.booking.sms.unable[lang] : i18n.booking.sms.send[lang]" data-ng-click="postSendSMS()" data-ng-disabled="selected.supportneed.surveystatus!='100'"></button>
+                &nbsp;
+                <span data-ng-show="smsSendSuccess" data-ng-bind="i18n.booking.sms.send.success[lang]"></span>
+                <span data-ng-show="smsSendFailed" data-ng-bind="i18n.booking.sms.send.failed[lang]"></span>
+              </form>
+            </div>
+          </div>
+        </span>
+      </p>
+    </div>
+    <div class="col-xs-6">
+      <h4 data-ng-bind="i18n.booking.survey[lang]"></h4>
+      <p>
+        <span title="{{i18n.booking.survey[lang]}}">
+          <i class="fa fa-tag"></i>
+          <span data-ng-bind="format(selected.supportneed.survey,'survey')"></span>
+        </span>
+        <br>
+        <span title="{{i18n.booking.timespan[lang]}}">
+          <i class="fa fa-calendar"></i>
+          <span data-ng-bind="format(selected.supportneed.starttime,'date')"></span>
+          &ndash;
+          <span data-ng-bind="format(selected.supportneed.endtime,'date')"></span>
+        </span>
+      </p>
+
+      <p>
+        <br>
+      </p>
+
+      <h4 data-ng-bind="i18n.booking.supportneed[lang]"></h4>
+      <p>
+        <span title="{{i18n.booking.category[lang]}}">
+          <label for="selectCategory">
+            <i class="fa fa-magic"></i>
+            <!-- span data-ng-bind="format(selected.supportneed.category,'category')"></span -->
+            <select id="selectCategory" data-ng-model="newCategory" data-ng-change="changeCategory(oldCategory,newCategory)"
+            data-ng-focus="oldCategory=selected.supportneed.category">
+              <option data-ng-repeat="c in codesAsArr.category | orderBy:'code':false:naturalCompare"
+               data-ng-selected="c.code == selected.supportneed.category" data-ng-bind="c.text[lang]"
+               value="{{c.code}}" title="{{c.code}}"></option>
+            </select>
+            <button class="btn btn-primary btn-xs" data-ng-show="categoryChanged" data-ng-bind="i18n.booking.save[lang]" data-ng-click="selected.supportneed.category=newCategory; putSupportNeed(selected.supportneed); categoryChanged=false;"></button>
+          </label>
+        </span>
+        <br>
+        <span title="{{i18n.booking.status[lang]}}">
+          <i class="fa" data-ng-class="{'fa-exclamation-circle':selected.supportneed.status=='1', 'fa-question-circle':selected.supportneed.status=='2', 'fa-check-circle':selected.supportneed.status=='100'}"></i>
+          <span data-ng-bind="format(selected.supportneed.status,'supportNeedStatus')"></span>
+        </span>
+        <br>
+        <span title="{{i18n.booking.userrole[lang]}}">
+          <label for="selectUserRole">
+            <i class="fa fa-user-plus"></i>
+            <!-- span data-ng-bind="format(selected.supportneed.userrole,'text')"></span -->
+            <select id="selectUserRole" data-ng-model="newUserRole" data-ng-change="changeUserRole(oldUserRole,newUserRole)"
+            data-ng-focus="oldUserRole=selected.supportneed.userrole">
+              <option value="" data-ng-selected="!selected.supportneed.userrole"></option><!-- to clear the selection -->
+              <option data-ng-repeat="c in codesAsArr.userrole | orderBy:'code':false:naturalCompare"
+               data-ng-selected="c.code == selected.supportneed.userrole" data-ng-bind="c.text[lang]"
+               value="{{c.code}}" title="{{c.code}}"></option>
+            </select>
+            <button class="btn btn-primary btn-xs" data-ng-show="userRoleChanged" data-ng-bind="i18n.booking.save[lang]" data-ng-click="selected.supportneed.userrole=newUserRole; putSupportNeed(selected.supportneed); userRoleChanged=false;"></button>
+          </label>
+        </span>
+      </p>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-xs-12">
+      <h4 data-ng-bind="i18n.booking.events[lang]"></h4>
+    </div>
+  </div>
+  <div class="row">
+    <form class="form">
+      <div class="col-xs-9">
+        <input type="text" class="form-control" data-ng-model="newComment">
+      </div>
+      <div class="col-xs-3">
+        <button class="btn bgcolor5 form-control" data-ng-bind="i18n.booking.comment[lang]" data-ng-click="putComment(selected.supportneed,newComment); newComment='';"></button>
+      </div>
+    </form>
+  </div>
+  <p></p>
+  <div class="row">
+    <div class="col-xs-12" data-ng-repeat="r in events | orderBy:'who':false:whoCompare | orderBy:'when':true">
+        [<span data-ng-bind="format(r.when,'datetime')"></span>]:
+        <b><span data-ng-bind="format(r.who,'user')"></span></b>
+        <span data-ng-bind="r.what"></span>&nbsp; <div style="display: inline-block; max-width: 94%; font-weight: bold;">"<span data-ng-bind="r.with"></span>"</div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-footer">
+  <button class="btn btn-warning" data-ng-show="selected.supportneed.status=='100'" data-ng-bind="i18n.booking.tohandle[lang]" data-ng-click="selected.supportneed.status='2'; putSupportNeed(selected.supportneed);"></button>
+  <button class="btn btn-success" data-ng-show="selected.supportneed.status!='100'" data-ng-bind="i18n.booking.ready[lang]" data-ng-click="selected.supportneed.status='100'; putSupportNeed(selected.supportneed);" data-dismiss="modal"></button>
+  <button class="btn btn-default" data-ng-bind="i18n.booking.close[lang]" data-dismiss="modal"></button>
+
+  <div class="position-absolute text-center btn-success" data-ng-show="showSaveSuccess" data-ng-bind="i18n.booking.save.success[lang]"></div>
+  <div class="position-absolute text-center btn-danger" data-ng-show="showSaveFailed" data-ng-bind="i18n.booking.save.failed[lang]"></div>
+</div>
+
+</div></div></div><!-- / modal -->
