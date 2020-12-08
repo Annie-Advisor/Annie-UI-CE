@@ -4,7 +4,7 @@
   "description": "Annie. UI",
   "repository": "https://github.com/Annie-Advisor/Annie-UI-CE.git",
   "author": "Annie Advisor",
-  "license": "CC-BY-NC-SA 4.0",
+  "license": "CC-BY-NC-SA-4.0",
   "devDependencies": {
     "grunt": "^1.0.3",
     "grunt-contrib-clean": "^1.1.0",
