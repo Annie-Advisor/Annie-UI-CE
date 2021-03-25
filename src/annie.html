@@ -24,6 +24,18 @@
 <script src="js/root.service.js"></script>
 <script src="js/root.filter.js"></script>
 <script src="js/root.controller.js"></script>
+<script>// it was at this point he knew he... had title
+  let titles = [];
+  if (CONFIG.title) {
+    titles.push(CONFIG.title);
+  } else {
+    titles.push("Annie.");
+  }
+  if (CONFIG.schoolName) {
+    titles.push(CONFIG.schoolName);
+  }
+  document.title = titles.join(" ");
+</script>
 
 <div data-ng-app="rootApp" data-ng-controller="rootController">
 
@@ -42,7 +54,12 @@
     </div>
     <div class="col-xs-4 text-center">
       <div data-ng-if="!auth"><h1>Oops!</h1><p>That's not the way you want to go...</p></div>
-      <span>&copy; 2020 <a href="https://annieadvisor.com">Annie Advisor Oy</a></span>
+      <span>
+        &copy; 2019<span id="copyrightyear"></span> <a href="https://annieadvisor.com">Annie Advisor</a>
+        <script>
+          document.getElementById("copyrightyear").innerHTML = "-"+new Date().getFullYear();
+        </script>
+      </span>
     </div>
     <div class="col-xs-4 text-right">
     </div>

@@ -1,7 +1,9 @@
 rootApp.service('DataService', ['$http', function($http) {
   let contactURI = CONFIG.contactURI;
+  let surveyURI = CONFIG.surveyURI;
   let messageURI = CONFIG.messageURI;
   let supportNeedURI = CONFIG.supportNeedURI;
+  let contactsurveyURI = CONFIG.contactsurveyURI;
   let commentURI = CONFIG.commentURI;
   let codesURI = CONFIG.codesURI;
   let metadataURI = CONFIG.metadataURI;
@@ -10,6 +12,13 @@ rootApp.service('DataService', ['$http', function($http) {
 
   this.getContacts = function() {
     return $http.get(contactURI)
+    .then(function(response) {
+      return response.data;
+    });
+  }
+
+  this.getSurveys = function() {
+    return $http.get(surveyURI)
     .then(function(response) {
       return response.data;
     });
@@ -58,6 +67,13 @@ rootApp.service('DataService', ['$http', function($http) {
       console.log('post ERROR ' + response.status + ' ' + response.data);
     });
   };
+
+  this.getContactsurvey = function(id) {
+    return $http.get(contactsurveyURI+id)
+    .then(function(response) {
+      return response.data;
+    });
+  }
 
   this.getComments = function(id) {
     return $http.get(commentURI+id)

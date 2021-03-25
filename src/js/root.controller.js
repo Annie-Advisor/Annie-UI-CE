@@ -33,8 +33,10 @@ function($scope,$http,$filter,$interval,$timeout,Data
     return data;
   }
 
-  // nb! returns also latest supportneeds aside contact data
-  //     so structure is '{id:"",contact:{},supportneeds:[]}'
+  // nb! what this function is really for is to populate
+  //     degrees, groups and locations multiselects
+  //     once at init.
+  //     the contact data here is copied later (frequently) to supportneeds.
   $scope.getContacts = function() {
     $scope.debug && console.debug('getContacts');
     $scope.authentication();//test
@@ -42,41 +44,44 @@ function($scope,$http,$filter,$interval,$timeout,Data
     Data.getContacts()
     .then(function(data) {
       $scope.debug>2 && console.debug('getContacts',data);
-      $scope.contacts = data;
+      $scope.contacts = {};//key-based not direct copy of data
       //multiselects data
       angular.forEach(data,function(d,i){
+        //contacts
+        $scope.contacts[d.id] = d.contact;//key-based
+        //NB! no language selection for degrees, groups and locations
         //degrees
         $scope.debug>2 && console.debug('getContacts','degrees',i,d);
         if (typeof d.contact.degree === 'undefined') {//missing altogether
-          $scope.degrees[''] = {fi:'(Puuttuu)',en:'(Missing)'};
+          $scope.degrees[''] = '--';
         } else if (d.contact.degree=="") {
-          $scope.degrees[''] = {fi:'(Puuttuu)',en:'(Missing)'};
+          $scope.degrees[''] = '--';
         } else if (!d.contact.degree) {//if null
-          $scope.degrees[''] = {fi:'(Puuttuu)',en:'(Missing)'};
+          $scope.degrees[''] = '--';
         } else {
-          $scope.degrees[d.contact.degree] = {fi:d.contact.degree,en:'*EN*'};
+          $scope.degrees[d.contact.degree] = d.contact.degree;
         }
         //groups
         $scope.debug>2 && console.debug('getContacts','groups',i,d);
         if (typeof d.contact.group === 'undefined') {//missing altogether
-          $scope.groups[''] = {fi:'(Puuttuu)',en:'(Missing)'};
+          $scope.groups[''] = '--';
         } else if (d.contact.group=="") {
-          $scope.groups[''] = {fi:'(Puuttuu)',en:'(Missing)'};
+          $scope.groups[''] = '--';
         } else if (!d.contact.group) {//if null
-          $scope.groups[''] = {fi:'(Puuttuu)',en:'(Missing)'};
+          $scope.groups[''] = '--';
         } else {
-          $scope.groups[d.contact.group] = {fi:d.contact.group,en:'*EN*'};
+          $scope.groups[d.contact.group] = d.contact.group;
         }
         //locations
         $scope.debug>2 && console.debug('getContacts','locations',i,d);
         if (typeof d.contact.location === 'undefined') {//missing altogether
-          $scope.locations[''] = {fi:'(Puuttuu)',en:'(Missing)'};
+          $scope.locations[''] = '--';
         } else if (d.contact.location=="") {
-          $scope.locations[''] = {fi:'(Puuttuu)',en:'(Missing)'};
+          $scope.locations[''] = '--';
         } else if (!d.contact.location) {//if null
-          $scope.locations[''] = {fi:'(Puuttuu)',en:'(Missing)'};
+          $scope.locations[''] = '--';
         } else {
-          $scope.locations[d.contact.location] = {fi:d.contact.location,en:d.contact.location};//same in all langs
+          $scope.locations[d.contact.location] = d.contact.location;
         }
       });
       $scope.debug>1 && console.debug('getContacts',$scope.contacts.length,'degrees:',Object.keys($scope.degrees).length,'locations:',Object.keys($scope.locations).length);
@@ -113,7 +118,52 @@ function($scope,$http,$filter,$interval,$timeout,Data
     Data.getSupportNeeds($scope.choices.category,$scope.choices.status,$scope.choices.survey,$scope.choices.userrole,$scope.choices.degree,$scope.choices.group,$scope.choices.location)
     .then(function(data) {
       $scope.debug>1 && console.debug('getSupportNeeds',data);
-      $scope.supportneeds = data;
+      $scope.supportneeds = angular.copy(data);
+      // copy contact data
+      angular.forEach(data,function(da,di){
+        // limit with contact related choices: degree, group, location
+        let cod = $scope.contacts[da.contact];
+        $scope.debug>2 && console.debug('getSupportNeeds',di,da.contact,cod.degree,cod.group,cod.location);
+        let keepcod = true;//default, but immediately change if any selections are made, and then check if matches
+        if ($scope.choices.degree.length>0 || $scope.choices.group.length>0 || $scope.choices.location.length>0) {
+          keepcod = false;
+        }
+        angular.forEach($scope.choices.degree,function(deg,di){
+          if (typeof cod.degree !== 'undefined' && deg == cod.degree)
+            keepcod = true;
+          if (deg === "")//special case of missing (Puuttuu)
+            if (typeof cod.degree === 'undefined' || !cod.degree)
+              keepcod = true;
+        });
+        angular.forEach($scope.choices.group,function(grp,gi){
+          if (typeof cod.group !== 'undefined' && grp == cod.group)
+            keepcod = true;
+          // special case of missing (Puuttuu)
+          if (grp === "")//special case of missing (Puuttuu)
+            if (typeof cod.group === 'undefined' || !cod.group)
+              keepcod = true;
+        });
+        angular.forEach($scope.choices.location,function(loc,li){
+          if (typeof cod.location !== 'undefined' && loc == cod.location)
+            keepcod = true;
+          if (loc === "")//special case of missing (Puuttuu)
+            if (typeof cod.location === 'undefined' || !cod.location)
+              keepcod = true;
+        });
+        if (!keepcod) {
+          //remove from the scope copy (not looped data)
+          angular.forEach($scope.supportneeds,function(sn,si){
+            if (sn.contact == da.contact)
+              $scope.supportneeds.splice(si,1);
+          });
+        } else {
+          // copy to the scope copy (loop is for data)
+          angular.forEach($scope.supportneeds,function(sn,si){
+            if (sn.contact == da.contact)
+              sn.contactdata = $scope.contacts[da.contact];
+          });
+        }
+      });
       $scope.resetSupportneedsPage();//->paginationCounts
       $scope.getMetadata();
       $scope.loading = false;
@@ -136,7 +186,7 @@ function($scope,$http,$filter,$interval,$timeout,Data
           ((a.survey > b.survey) ? 1 :
             ((b.survey > a.survey) ? -1 :
               ((a.updated > b.updated) ? 1 :
-              0)
+              -1)
             )
           )
         )
@@ -192,6 +242,21 @@ function($scope,$http,$filter,$interval,$timeout,Data
         $scope.showSaveSuccess = false;
         $scope.showSaveFailed = false;
       }, CONFIG.timeout*1000);
+    });
+  }
+
+  $scope.getContactsurvey = function(contactid) {
+    $scope.debug && console.debug('getContactsurvey',contactid);
+    $scope.authentication();//test
+    $scope.selected.supportneed.surveystatus = '100';//default
+    $scope.smsMessage = ""; //empty to be sure
+    Data.getContactsurvey(contactid)
+    .then(function(data) {
+      $scope.debug>1 && console.debug('getContactsurvey',contactid,data);
+      angular.forEach(data,function(v,k){
+        $scope.selected.supportneed.surveystatus = v.status;
+      });
+      $scope.debug>1 && console.debug('getContactsurvey',contactid,$scope.selected.supportneed);
     });
   }
 
@@ -251,6 +316,18 @@ function($scope,$http,$filter,$interval,$timeout,Data
     $scope.debug && console.debug('getCodes',codeset,code);
     $scope.authentication();//test
     let codes = {};//convert list to a object
+    Data.getSurveys()
+    .then(function(data) {
+      codes.survey = {};
+      $scope.debug>1 && console.debug('getCodes','survey',data);
+      angular.forEach(data,function(c,i){//at data list
+        if (c.config) {
+          if (c.config.name) {
+            codes.survey[c.id] = c.config.name;
+          }
+        }
+      });
+    });
     Data.getCodes(codeset,code)
     .then(function(data) {
       $scope.debug>1 && console.debug('getCodes',codeset,code,data);
@@ -412,7 +489,7 @@ function($scope,$http,$filter,$interval,$timeout,Data
      && $scope.codes.hasOwnProperty(type) && $scope.codes[type].hasOwnProperty(value)) {
       return $scope.codes[type][value][$scope.lang];
     }
-    if (type=='date') {
+    if (type=='date' || type=='datetime') {
       //OnTask hack: "midnight" to "00:00:00", "a.m." to "AM", "p.m." to "PM"
       value = value.replace("midnight","00:00:00");
       value = value.replace("a.m.","AM");
@@ -432,46 +509,27 @@ function($scope,$http,$filter,$interval,$timeout,Data
       value = value.replace("Dec.","Dec");
       //Firefox hack: ends "+03" -> "+0300"
       if (value.endsWith("+03")) {
-        value = value.replace("+03","+0300");
+        value = value.replace("+03","+03:00");
       }
       if (value.endsWith("+02")) {
-        value = value.replace("+02","+0200");
+        value = value.replace("+02","+02:00");
+      }
+      if (value.includes("-") && !value.includes("T")) {
+        value = value.replace(/\s/g, 'T');
       }
       let d = new Date(value);
       let dd = d.getDate();
       let dm = (d.getMonth()+1);
       let dy = d.getFullYear();
-      return dd+"."+dm+"."+dy;
-    }
-    if (type=='datetime') {
-      //Firefox hack: "Aug." -> "Aug"
-      value = value.replace("Jan.","Jan");
-      value = value.replace("Feb.","Feb");
-      value = value.replace("Mar.","Mar");
-      value = value.replace("Apr.","Apr");
-      //value = value.replace("May.","May");
-      value = value.replace("Jun.","Jun");
-      value = value.replace("Jul.","Jul");
-      value = value.replace("Aug.","Aug");
-      value = value.replace("Sep.","Sep");
-      value = value.replace("Oct.","Oct");
-      value = value.replace("Nov.","Nov");
-      value = value.replace("Dec.","Dec");
-      //Firefox hack: ends "+03" -> "+0300"
-      if (value.endsWith("+03")) {
-        value = value.replace("+03","+0300");
+      if (type=='date') {
+        return dd+"."+dm+"."+dy;
       }
-      if (value.endsWith("+02")) {
-        value = value.replace("+02","+0200");
+      if (type=='datetime') {
+        let dth = d.getHours();
+        let dtm = d.getMinutes()<10?'0'+d.getMinutes():d.getMinutes();
+        //let dts = d.getSeconds()<10?'0'+d.getSeconds():d.getSeconds();
+        return dd+"."+dm+"."+dy+" "+dth+":"+dtm;
       }
-      let d = new Date(value);
-      let dd = d.getDate();
-      let dm = (d.getMonth()+1);
-      let dy = d.getFullYear();
-      let dth = d.getHours();
-      let dtm = d.getMinutes()<10?'0'+d.getMinutes():d.getMinutes();
-      //let dts = d.getSeconds()<10?'0'+d.getSeconds():d.getSeconds();
-      return dd+"."+dm+"."+dy+" "+dth+":"+dtm;
     }
     if (type=='time') {
       return value;
@@ -494,11 +552,8 @@ function($scope,$http,$filter,$interval,$timeout,Data
     $scope.getSupportNeedHistory(contact);
     $scope.getComments(supportneed.id);
     // if survey is ongoing:
-    if ($scope.selected.supportneed.surveystatus != '100') {
-      $scope.smsMessage = $scope.i18n.booking.sms.unable.text[$scope.lang];
-    } else {
-      $scope.smsMessage = ""; //empty to be sure
-    }
+    $scope.smsMessage = $scope.i18n.booking.sms.unable.text[$scope.lang];
+    $scope.getContactsurvey(contact);
   }
 
   $scope.changeCategory = function(oldCategory,newCategory) {
@@ -527,7 +582,7 @@ function($scope,$http,$filter,$interval,$timeout,Data
   
   $scope.Math = Math;
 
-  $scope.contacts = [];
+  $scope.contacts = {};//key-based, not list/array
   $scope.supportneeds = [];
   $scope.supportneedspage = [];
   $scope.counts = { //values will be numbers later on!
@@ -644,12 +699,12 @@ let subMultiselect = function(referenceId,text,objsArrOrdered,multioptions) {
       enableFiltering: true,
       enableCaseInsensitiveFiltering: true,
       filterBehavior: multioptions.filterBehavior,
-      filterPlaceholder: (lang=='en'?'Search...':'Etsi arvoa...'),
+      filterPlaceholder: (lang=='fi'?'Etsi arvoa...':'Search...'),
       numberDisplayed: 1,
-      nonSelectedText: (lang=='en'?'Choose ':'Valitse ')+text[lang],
+      nonSelectedText: (lang=='fi'?'Suodata ':'Filter '),
       includeSelectAllOption: true,
-      allSelectedText: (lang=='en'?'All chosen':'Kaikki valittu'),
-      selectAllText: (lang=='en'?'Choose all':'Valitse kaikki'),
+      allSelectedText: (lang=='fi'?'Kaikki valittu':'All chosen'),
+      selectAllText: (lang=='fi'?'Valitse kaikki':'Choose all'),
       //---
       dropRight: multioptions.dropRight,
       // for lang, perhaps, callBacks...
@@ -658,9 +713,9 @@ let subMultiselect = function(referenceId,text,objsArrOrdered,multioptions) {
       enableHTML: true,
       buttonText: function(options){
         if (options.length == 0) {
-          return (lang=='en'?'Choose ':'Valitse ')+text[lang];
+          return (lang=='fi'?'Suodata ':'Filter ');//+text[lang];
         } else if (options.length > 1) {
-          return options.length+' '+(lang=='en'?'chosen':'valittu');
+          return options.length+' '+(lang=='fi'?'valittu':'chosen');
         } else {
           var labels = [];
           options.each(function() {
@@ -677,13 +732,19 @@ let subMultiselect = function(referenceId,text,objsArrOrdered,multioptions) {
     });
 
     let options = [];
+    // nb! no lang
     angular.forEach(objsArrOrdered,function(obj){
       // convert missing value indicator back to a value that will be found
       let optvalue = obj.code;
-      if (obj.text[lang]=="(Puuttuu)" || obj.text[lang]=="(Missing)") {
+      if (obj.text=="--") {
         optvalue = "";
       }
-      options.push({label: obj.text[lang], title: obj.code, value: optvalue, selected: false});
+      // nb! no language selection for degree, group or location
+      if (referenceId=='#multiselectDegree'||referenceId=='#multiselectGroup'||referenceId=='#multiselectLocation') {
+        options.push({label: obj.text, title: obj.code, value: optvalue, selected: false});
+      } else {
+        options.push({label: obj.text[lang], title: obj.code, value: optvalue, selected: false});
+      }
     });
     angular.element(referenceId).multiselect('dataprovider', options);
     // must do but interferes with search!
@@ -700,24 +761,24 @@ let subMultiselect = function(referenceId,text,objsArrOrdered,multioptions) {
     //contact
     //
 
-    //degrees
+    //degrees, nb! no lang
     objsArrOrdered = Object.keys($scope.degrees).map(function(key) {
       return {"code":key,"text":$scope.degrees[key]};
-    }).sort( (a,b) =>  1 * ((a.text[lang] > b.text[lang]) ? 1 : ((b.text[lang] > a.text[lang]) ? -1 : 0)) );
+    }).sort( (a,b) =>  1 * ((a.text > b.text) ? 1 : ((b.text > a.text) ? -1 : 0)) );
     $scope.debug && console.debug('resetMultiselect','DEVELOP','degrees',objsArrOrdered,$scope.degrees);
     subMultiselect('#multiselectDegree',{fi:'tutkinto',en:'degree'},objsArrOrdered,{filterBehavior:'text',dropRight:false});
 
-    //groups
+    //groups, nb! no lang
     // nb! order alphabetically and REVERSED (hence "-1*" below)
     objsArrOrdered = Object.keys($scope.groups).map(function(key) {
       return {"code":key,"text":$scope.groups[key]};
-    }).sort( (a,b) => -1 * ((a.text[lang] > b.text[lang]) ? 1 : ((b.text[lang] > a.text[lang]) ? -1 : 0)) );
+    }).sort( (a,b) => -1 * ((a.text > b.text) ? 1 : ((b.text > a.text) ? -1 : 0)) );
     subMultiselect('#multiselectGroup',{fi:'ryhmä',en:'group'},objsArrOrdered,{filterBehavior:'text',dropRight:false});
 
-    //locations
+    //locations, nb! no lang
     objsArrOrdered = Object.keys($scope.locations).map(function(key) {
       return {"code":key,"text":$scope.locations[key]};
-    }).sort( (a,b) =>  1 * ((a.text[lang] > b.text[lang]) ? 1 : ((b.text[lang] > a.text[lang]) ? -1 : 0)) );
+    }).sort( (a,b) =>  1 * ((a.text > b.text) ? 1 : ((b.text > a.text) ? -1 : 0)) );
     //$scope.debug>1 && console.debug('resetMultiselect','DEVELOP','locations',objsArrOrdered,$scope.locations);
     subMultiselect('#multiselectLocation',{fi:'toimipaikka',en:'location'},objsArrOrdered,{filterBehavior:'text',dropRight:false});
 
@@ -738,9 +799,12 @@ let subMultiselect = function(referenceId,text,objsArrOrdered,multioptions) {
     subMultiselect('#multiselectCategory',{fi:'ratkaistava asia',en:'category'},objsArrOrdered,{filterBehavior:'both',dropRight:true});
 
     // userrole
-    objsArrOrdered = Object.keys($scope.codes.userrole).map(function(key) {
-      return {"code":key,"text":$scope.codes.userrole[key]};
-    }).sort( (a,b) =>  1 * ((a.code > b.code) ? 1 : ((b.code > a.code) ? -1 : 0)) );
+    objsArrOrdered = [];
+    if ($scope.codes.userrole) {
+      objsArrOrdered = Object.keys($scope.codes.userrole).map(function(key) {
+        return {"code":key,"text":$scope.codes.userrole[key]};
+      }).sort( (a,b) =>  1 * ((a.code > b.code) ? 1 : ((b.code > a.code) ? -1 : 0)) );
+    }
     // append Missing as first one!
     objsArrOrdered.unshift({code:"","text":{"fi":"(Puuttuu)","en":"(Missing)"}});
     subMultiselect('#multiselectUserrole',{fi:'käyttäjäryhmä',en:'user role'},objsArrOrdered,{filterBehavior:'both',dropRight:true});

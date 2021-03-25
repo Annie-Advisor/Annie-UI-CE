@@ -86,13 +86,21 @@ module.exports = function (grunt) {
         ],
         dest: distDir+'/'
       },
-      favicon: {
+      images: {
         expand: true,
         cwd: srcDir,
         src: [
           './*.png'
         ],
-        dest: distDir
+        dest: distDir+'/'
+      },
+      favicon: {
+        expand: true,
+        cwd: srcDir,
+        src: [
+          './favicon/**'
+        ],
+        dest: distDir+'/'
       }
     },
     googlefonts: {

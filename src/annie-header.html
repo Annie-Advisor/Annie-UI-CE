@@ -29,7 +29,7 @@
         <h5>
           <small data-ng-bind="auth.uid"></small>
           <br>
-          <span data-ng-bind="role" data-ng-init="roleparts=auth.role.split(';'); role=roleparts[roleparts.length-1];"></span>
+          <span data-ng-bind="auth.role"></span>
         </h5>
       </div>
       <div class="modal-body">
@@ -40,7 +40,7 @@
         </p>
         <p><span data-ng-bind="municipality[lang]"></span> <small>(<span data-ng-bind="auth.municipalityCode"></span>)</small></p>
         <p><span data-ng-bind="auth.class"></span></p>
-        <p><small data-ng-repeat="r in auth.role.split(';')">/<span data-ng-bind="r"></span></small></p>
+        <!-- p><small data-ng-repeat="r in auth.role.split(';')">/<span data-ng-bind="r"></span></small></p -->
         <p><small data-ng-bind="auth.cid"></small></p>
         <p><small data-ng-bind="auth.cide"></small></p>
       </div>
