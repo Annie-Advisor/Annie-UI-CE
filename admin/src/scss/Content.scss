@@ -1,0 +1,13 @@
+@import './variables.scss';
+
+.content {
+  background-color: $background-color;
+  flex-grow: 1;
+  padding: 6rem 4rem;
+  overflow-y: auto;
+}
+
+.content h1 {
+  margin: 0 0 4rem;
+  font-size: 2.8rem;
+}

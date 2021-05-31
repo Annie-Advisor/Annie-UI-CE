@@ -1,0 +1,121 @@
+@import './variables.scss';
+
+.surveys {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.survey {
+  border-radius: $border-radius;
+  background-color: $white;
+  width: 17.5rem;
+  margin: 0 2rem 2rem 0;
+  display: flex;
+  flex-direction: column;
+  box-shadow: $box-shadow;
+  transition: .1s all;
+  padding: 1rem 2rem 2rem;
+  cursor: pointer;
+}
+
+.survey:hover {
+  transform: scale(1.03);
+  box-shadow: $box-shadow-hover;
+}
+
+.survey.draft {
+  background-color: unset;
+  border-radius: $border-radius;
+  border: 2px dashed $dark-grey;
+}
+
+.survey.skeleton-container {
+  cursor: initial;
+  display: block;
+}
+
+.survey.skeleton-container:hover {
+  transform: none;
+  box-shadow: $box-shadow;
+}
+
+.survey h3 {
+  margin: 0 0 2rem;
+  font-size: 1.6rem;
+  font-weight: 500;
+  word-wrap: break-word;
+}
+
+.survey p {
+  margin: auto 0 0;
+  font-size: 1.2rem;
+}
+
+.survey p.status {
+  margin-top: 2rem;
+}
+
+.survey.skeleton * {
+  background-color: $light-grey;
+}
+
+.surveys .loader-container {
+  width: 12rem;
+  display: flex;
+  align-items: center;
+}
+
+.loader-container svg {
+  stroke: $blue;
+  margin: auto;
+}
+
+.button.create-new {
+  font-weight: 600;
+  color: $white;
+  background-color: $green;
+  box-shadow: $box-shadow;
+  padding: 1.5rem 3rem;
+  border-radius: $admin-radius;
+  display: inline-block;
+  margin-bottom: 3rem;
+}
+
+.button.create-new svg {
+  margin-right: 1rem;
+  vertical-align: middle;
+}
+
+.survey .options-popover {
+  margin: 0 -1rem 1rem auto;
+}
+
+.search-sort-surveys {
+  display: flex;
+  align-items: center;
+  margin-bottom: 3rem;
+}
+
+.search-sort-surveys select {
+  margin-left: 1.5rem;
+}
+
+.sort-order {
+  cursor: pointer;
+  width: 4rem;
+  height: 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 1.5rem;
+  border-radius: $border-radius;
+  border: 1px solid $border-color;
+}
+
+.sort-order:hover {
+  background-color: $light-grey-on-grey;
+}
+
+.search-sort-surveys .search {
+  margin-left: 3rem;
+}
