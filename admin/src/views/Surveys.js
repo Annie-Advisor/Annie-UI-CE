@@ -23,23 +23,23 @@ export default function Surveys() {
         searchData = data.filter(survey => survey.config.name[intl.locale].toLowerCase().includes(searchText.toLowerCase()))
         if (sortMethod === "alphabetical") {
             sortReverse ?
-            data.sort((a, b) => b.config.name[intl.locale].localeCompare(a.config.name[intl.locale])) :
-                data.sort((a, b) => a.config.name[intl.locale].localeCompare(b.config.name[intl.locale]))
+                searchData.sort((a, b) => b.config.name[intl.locale].localeCompare(a.config.name[intl.locale])) :
+                searchData.sort((a, b) => a.config.name[intl.locale].localeCompare(b.config.name[intl.locale]))
         }
         if (sortMethod === "updated") {
             sortReverse ?
-            data.sort((a, b) => b.updated.localeCompare(a.updated)) :
-                data.sort((a, b) => a.updated.localeCompare(b.updated))
+                searchData.sort((a, b) => b.updated.localeCompare(a.updated)) :
+                searchData.sort((a, b) => a.updated.localeCompare(b.updated))
         }
         if (sortMethod === "starttime") {
             sortReverse ?
-                data.sort((a, b) => b.starttime.localeCompare(a.starttime)) :
-                data.sort((a, b) => a.starttime.localeCompare(b.starttime))
+                searchData.sort((a, b) => b.starttime.localeCompare(a.starttime)) :
+                searchData.sort((a, b) => a.starttime.localeCompare(b.starttime))
         }
         if (sortMethod === "endtime") {
             sortReverse ?
-                data.sort((a, b) => b.endtime.localeCompare(a.endtime)) :
-                data.sort((a, b) => a.endtime.localeCompare(b.endtime))
+                searchData.sort((a, b) => b.endtime.localeCompare(a.endtime)) :
+                searchData.sort((a, b) => a.endtime.localeCompare(b.endtime))
         }
     }
 
