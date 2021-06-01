@@ -1,0 +1,66 @@
+@import './variables.scss';
+
+.sidebar {
+  flex-basis: 23rem;
+  min-width: 23rem;
+  border-right: 1px solid $light-grey-on-grey;
+}
+
+.sidebar.closed {
+  max-width: 6rem;
+  min-width: 6rem;
+}
+
+.sidebar h1 {
+  margin: 0;
+  padding: 4rem 2rem 4rem 4rem;
+  font-weight: 600;
+  font-size: 1.6rem;
+  display:flex;
+}
+
+.sidebar.closed h1 {
+  padding: 4rem 2rem;
+}
+
+.sidebar .toggle-sidebar {
+  margin-left: auto;
+  cursor: pointer;
+}
+
+.sidebar.closed .toggle-sidebar {
+  transform: rotateY(180deg);
+}
+
+.sidebar nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar nav ul li a {
+  cursor: pointer;
+  padding: 1rem 4rem;
+  line-height: 1.6;
+  width: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.sidebar.closed nav ul li a {
+  padding: 1rem 2rem;
+  display: block;
+}
+
+.sidebar nav ul li a.active {
+  background-color: $light-grey;
+  font-weight: 600;
+}
+
+.sidebar nav ul li a svg {
+  margin-right: 1rem;
+}
+
+nav li:hover svg .active, nav li a.active svg .active {
+  fill: $black;
+}

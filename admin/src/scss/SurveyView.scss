@@ -1,0 +1,303 @@
+@import './variables.scss';
+
+.survey-container {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  background-color: $background-color;
+}
+
+.survey-header {
+  display: flex;
+  padding: 1.5rem 2rem;
+  align-items: center;
+  background-color: $white;
+  border-radius: $border-radius;
+  margin: 2rem 2rem 0 2rem;
+}
+
+.survey-header > a {
+  margin-right: 2rem;
+}
+
+.survey-header a svg {
+  vertical-align: middle;
+}
+
+.survey-header p.status {
+  margin-left: 2rem;
+}
+
+.survey-view {
+  display: flex;
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+.survey-content {
+  flex-grow: 1;
+  margin: 2rem 0 2rem 2rem;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.survey-navigation {
+  padding: 2rem 2rem 0;
+  border-bottom: 1px solid $light-grey-on-grey;
+  background-color: $white;
+  border-radius: 8px 8px 0 0;
+}
+
+.survey-navigation ul {
+  display: flex;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  width: fit-content;
+}
+
+.survey-navigation ul a {
+  font-weight: 600;
+  color: $grey-text;
+  margin: 0 2rem;
+  display: inline-block;
+}
+
+.survey-navigation ul a:hover {
+  color: $black;
+}
+
+.survey-navigation ul a.active {
+  color: $blue;
+}
+
+.survey-navigation ul a.active::after {
+  display: block;
+  content: "";
+  height: 4px;
+  width: 100%;
+  background-color: $blue;
+  border-radius: 4px 4px 0 0;
+  margin-top: calc(2rem - 4px);
+}
+
+.survey-edit {
+  overflow-y: scroll;
+  background-color: $box-background;
+  border-radius: 0 0 8px 8px;
+  padding: 3rem 3rem 4rem;
+}
+
+.survey-edit input[type="text"] {
+  font-size: 1.6rem;
+  padding: 1.5rem 2.2rem;
+  display: block;
+  width: 100%;
+  margin-top: 2rem;
+}
+
+.survey-edit h1 {
+  margin: 0 0 4rem;
+}
+
+.survey-preview {
+  overflow-y: hidden;
+  flex-shrink: 0;
+  margin: 2rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.survey-preview.closed {
+  flex-shrink: unset;
+}
+
+.survey-preview h3 {
+  margin-right: 4rem;
+  font-size: 1.4rem;
+}
+
+.survey-preview .preview-header {
+  display: flex;
+  padding: 2rem;
+  border-bottom: 1px solid $light-grey-on-grey;
+  background-color: $white;
+  border-radius: 8px 8px 0 0;
+}
+
+.survey-preview.closed .preview-header {
+  border-radius: $border-radius;
+}
+
+.survey-preview .preview-header button {
+  background-color: unset;
+  padding: 0;
+  margin-left: auto;
+  height: 2rem;
+  width: 2rem;
+  text-align:center;
+}
+
+.survey-preview .preview-header button svg {
+  height: 1.6rem;
+  width: 1.6rem;
+  vertical-align: middle;
+}
+
+.survey-preview .preview-header button:hover svg * {
+  stroke: black;
+}
+
+.survey-preview .messages {
+  padding: 3rem;
+  overflow-y: scroll;
+  background-color: $white;
+  border-radius: 0 0 8px 8px;
+  background-color: $box-background;
+}
+
+.survey-preview .message-icon {
+  cursor: default;
+}
+
+.survey-time {
+  display: grid;
+  grid-gap: 4rem;
+  grid-template-columns: 1fr 1fr;
+  margin-top: 4rem;
+}
+
+.survey-time .react-datepicker-wrapper {
+  display: block;
+}
+
+.survey-time .react-datepicker {
+  font-family: $font-family;
+  font-size: 1.2rem;
+  border: 1px solid $border-color;
+  border-radius: 4px;
+  box-shadow: $box-shadow;
+}
+
+.survey-time .react-datepicker__triangle {
+  left: 2rem !important;
+}
+
+.survey-time .react-datepicker__month {
+  margin: 1rem;
+}
+
+.survey-time .react-datepicker__day-name, .survey-time .react-datepicker__day, .survey-time .react-datepicker__time-name {
+  margin: .1rem;
+  width: 3rem;
+  line-height: 3rem;
+}
+
+.survey-time .react-datepicker__current-month, .survey-time .react-datepicker-time__header, .survey-time .react-datepicker-year-header {
+  font-size: 1.2rem;
+  font-weight: 500;
+}
+
+.survey-time .react-datepicker__day--selected, .survey-time .react-datepicker__day--in-selecting-range, .survey-time .react-datepicker__day--in-range, .survey-time .react-datepicker__month-text--selected, .survey-time .react-datepicker__month-text--in-selecting-range, .survey-time .react-datepicker__month-text--in-range, .survey-time .react-datepicker__quarter-text--selected, .survey-time .react-datepicker__quarter-text--in-selecting-range, .survey-time .react-datepicker__quarter-text--in-range, .survey-time .react-datepicker__year-text--selected, .survey-time .react-datepicker__year-text--in-selecting-range, .survey-time .react-datepicker__year-text--in-range {
+  background-color: $main-color;
+}
+
+.survey-time .react-datepicker__day--selected:hover, .survey-time .react-datepicker__day--in-selecting-range:hover, .survey-time .react-datepicker__day--in-range:hover,
+.survey-time .react-datepicker__month-text--selected:hover,
+.survey-time .react-datepicker__month-text--in-selecting-range:hover,
+.survey-time .react-datepicker__month-text--in-range:hover,
+.survey-time .react-datepicker__quarter-text--selected:hover,
+.survey-time .react-datepicker__quarter-text--in-selecting-range:hover,
+.survey-time .react-datepicker__quarter-text--in-range:hover,
+.survey-time .react-datepicker__year-text--selected:hover,
+.survey-time .react-datepicker__year-text--in-selecting-range:hover,
+.survey-time .react-datepicker__year-text--in-range:hover,
+.survey-time .react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box ul.react-datepicker__time-list li.react-datepicker__time-list-item--selected:hover {
+  background-color: $main-color;
+}
+
+.survey-time .react-datepicker__time-container {
+  border-left: 1px solid $border-color;
+}
+
+.survey-time .react-datepicker__header {
+  border-bottom: 1px solid $border-color;
+}
+
+.survey-time .react-datepicker__time-container .react-datepicker__time .react-datepicker__time-box ul.react-datepicker__time-list li.react-datepicker__time-list-item--selected {
+  background-color: $main-color;
+}
+
+.survey-time .react-datepicker__day--keyboard-selected, .survey-time .react-datepicker__month-text--keyboard-selected, .survey-time .react-datepicker__quarter-text--keyboard-selected, .survey-time .react-datepicker__year-text--keyboard-selected {
+  background-color: $grey;
+}
+
+.save-toolbar {
+  display: flex;
+  margin-left: auto;
+}
+
+.unsaved-changes {
+  margin: 0 auto 0 2rem;
+  color: $grey-text;
+}
+
+.save-toolbar button {
+  margin-left: 1.5rem;
+  text-align: center;
+  border-radius: $admin-radius;
+  padding: 1rem 1.5rem;
+  font-weight: 600;
+  font-size: 1.4rem;
+  min-width: 8rem;
+  height: 4rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.save-toolbar button.save {
+  color: $white;
+  background-color: $main-color;
+}
+
+.save-toolbar button.cancel {
+  background-color: transparent;
+  color: $grey-text;
+  font-weight: 400;
+  padding: 0;
+  min-width: unset;
+}
+
+.save-toolbar button.cancel:hover {
+  color: $black;
+}
+
+.add-new-reminder {
+  background-color: $white;
+  border-radius: $border-radius;
+  border: 1px solid $border-color;
+  padding: 1rem 1.5rem;
+  font-weight: 600;
+  font-size: 1.4rem;
+  height: 4rem;
+}
+
+.reminder-tools {
+  margin-top: 1.5rem;
+  align-items: center;
+}
+
+.reminder-tools input {
+  background-color: $light-grey;
+  border-radius: $border-radius;
+  border: 1px solid $grey;
+  padding: 1rem .5rem 1rem 1.5rem;
+  font-weight: 600;
+  font-size: 1.4rem;
+  height: 4rem;
+  margin-left: 1rem;
+  width: 7rem;
+  margin-right: .5rem
+}

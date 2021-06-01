@@ -1,0 +1,208 @@
+@import './variables.scss';
+
+.skeleton {
+  background-color: $light-grey;
+  border-radius: 4px;
+  margin-bottom: .5rem;
+  animation: pulse 1s alternate infinite;
+  display: block;
+}
+
+.skeleton.circle {
+  border-radius: 100%;
+}
+
+.skeleton.inline {
+  display: inline-block;
+}
+
+@keyframes pulse {
+  0% {background-color: $transparent-grey;}
+  100% {background-color: $light-grey;}
+}
+
+p.status {
+  text-transform: uppercase;
+  font-weight: 600;
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+p.status.draft {
+  color: $dark-grey;
+}
+
+p.status.scheduled {
+  color: $orange;
+}
+
+p.status.in-progress {
+  color: $green;
+}
+
+p.status.finished {
+  color: $blue;
+}
+
+p.status svg {
+  margin-right: .5rem;
+}
+
+p.status circle {
+  fill: currentColor;
+}
+
+.popover-container {
+  position: relative;
+}
+
+.popover {
+  position: absolute;
+  background-color: $white;
+  box-shadow: $box-shadow;
+  padding: 1rem 2rem;
+  min-width: 17.5rem;
+  z-index: 2;
+  border-radius: $border-radius;
+}
+
+.popover-toggle {
+  width: 2.5rem;
+  height: 2.5rem;
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.popover-toggle:hover {
+  background-color: $light-grey;
+}
+
+.popover-toggle > svg {
+ fill: $black;
+}
+
+.popover > div {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.popover svg {
+  margin-right: 1rem;
+}
+
+.popover .delete {
+  color: $red;
+}
+
+.modal-container {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9;
+}
+
+.close-modal {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  position: absolute;
+  background-color: $shadow-color;
+}
+
+.modal {
+  z-index: 2;
+  background-color: white;
+  border-radius: $border-radius;
+  padding: 3rem;
+  box-shadow: $box-shadow;
+}
+
+.modal .close-toggle {
+  cursor: pointer;
+}
+
+.modal .close-toggle-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+}
+
+.modal-options {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 5rem;
+}
+
+.modal-options button {
+  border-radius: 4px;
+  padding: 1rem 1.5rem;
+  background-color: $light-grey;
+  border: 1px solid $grey;
+  font-weight: 600;
+  font-size: 1.4rem;
+  margin-left: 1.5rem;
+}
+
+.modal-options button.confirm {
+  color: $white;
+  background-color: $green;
+  border-color: $green;
+}
+
+.modal-options button.alert {
+  color: $white;
+  background-color: $red;
+  border-color: $red;
+}
+
+.modal-options button.cancel {
+  margin-left: 6rem;
+}
+
+.modal-options .discard {
+  margin-right: auto;
+  margin-left: 0;
+}
+
+input[type="checkbox"].switch {
+  display: none;
+}
+
+.switch-label {
+  width: 3.5rem;
+  height: 2.2rem;
+  border-radius: 1.1rem;
+  background-color: $grey;
+  padding: .2rem;
+  cursor: pointer;
+  display: flex;
+}
+
+.switch-label::after {
+  display: block;
+  content: '';
+  width: 1.8rem;
+  height: 1.8rem;
+  background-color: $white;
+  border-radius: 100%;
+  transition: .1s margin;
+}
+
+.switch[checked] + .switch-label {
+  background-color: $green;
+}
+
+.switch[checked] + .switch-label::after {
+  margin-left: auto;
+}

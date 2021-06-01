@@ -1,0 +1,122 @@
+@import '../fonts/fonts.scss';
+@import './variables.scss';
+
+html {
+  font-size: 10px;
+  box-sizing: border-box;
+}
+
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
+}
+
+body {
+  margin: 0;
+  font-family: $font-family;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: 1.4rem;
+  color: $black;
+  background-color: $white;
+  line-height: $line-height;
+}
+
+h1 {
+  font-size: 2rem;
+  font-weight: 400;
+}
+
+h3 {
+  font-size: 1.6rem;
+  margin: 0;
+  font-weight: 600;
+}
+
+a {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+input[type="text"] {
+  -webkit-appearance: none;
+  appearance: none;
+  -webkit-box-shadow: none;
+  -moz-box-shadow: none;
+  outline: none;
+  box-shadow: none;
+  background-color: $white;
+  border: 1px solid $light-grey-on-grey;
+  border-top-color: $white;
+  border-radius: $border-radius;
+  font-size: inherit;
+  padding: 1rem 2.2rem;
+  width: 22.5rem;
+}
+
+input[type="text"]:focus {
+  border: 1px solid $border-color;
+}
+
+input[type="text"].search {
+  border: 1px solid $border-color;
+  background-image: url(../svg/search.svg);
+  background-repeat: no-repeat;
+  background-position: right 1.5rem top 50%;
+  padding: 1rem 4rem 1rem 2rem;
+}
+
+input::placeholder {
+  color: $placeholder-color;
+  opacity: 1;
+}
+
+input:-ms-input-placeholder {
+  color: $placeholder-color;
+}
+
+input::-ms-input-placeholder {
+  color: $placeholder-color;
+}
+
+select {
+  -webkit-appearance: none;
+  appearance: none;
+  -webkit-box-shadow: none;
+  -moz-box-shadow: none;
+  outline: none;
+  box-shadow: none;
+  background-color: $white;
+  border: 1px solid $border-color;
+  border-radius: $border-radius;
+  font-size: inherit;
+  padding: 1rem 3.5rem 1rem 2rem;
+  font-family: $font-family;
+  cursor: pointer;
+  line-height: 2rem;
+  background-image: url(../svg/chevron.svg);
+  background-repeat: no-repeat;
+  background-position: right 1.5rem top 50%;
+}
+
+button {
+  cursor: pointer;
+}
+
+button, input {
+  -webkit-appearance: none;
+  appearance: none;
+  -webkit-box-shadow: none;
+  -moz-box-shadow: none;
+  outline: none;
+  box-shadow: none;
+  border-style: none;
+  font-family: $font-family;
+}
+
+button::-moz-focus-inner,
+input::-moz-focus-inner {
+  border: 0;
+  padding: 0;
+}
