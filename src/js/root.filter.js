@@ -5,6 +5,8 @@ rootApp.filter('basic', function() {
   return function(haystack, needle, scope) {
     // clear unusables (null, empty strings, ...)
     if(typeof needle === 'undefined' || !needle) return haystack;
+    // too short (for efficiency)
+    if(needle.length < 3) return haystack;
     // else... start finding matches
     // get searchable fields
     let allcolumns = {};
@@ -30,8 +32,8 @@ rootApp.filter('basic', function() {
           fortest = haystack[i][column];//nb! basically only code values!
         }
         if (typeof fortest !== 'undefined' && fortest) {
-          // "contains"
-          if (fortest.toLowerCase().indexOf(needle.toLowerCase()) !== -1) {//if even one says yes..
+          // "contains", cast possible numbers to strings with +""
+          if ((fortest+"").toLowerCase().indexOf(needle.toLowerCase()) !== -1) {//if even one says yes..
             addit = true;//..it's a yes!
           }
         }

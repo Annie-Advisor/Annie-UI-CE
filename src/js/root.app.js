@@ -33,7 +33,7 @@ rootApp.run(function($rootScope){
 
 // Credits: http://stackoverflow.com/a/979995
 var QueryString = function () {
-  // This function is anonymous, is executed immediately and 
+  // This function is anonymous, is executed immediately and
   // the return value is assigned to QueryString!
   var query_string = {};
   var query = window.location.search.substring(1);
@@ -51,19 +51,12 @@ var QueryString = function () {
     } else {
       query_string[pair[0]].push(decodeURIComponent(pair[1]));
     }
-  } 
+  }
   return query_string;
 }();
 
-let lang='fi';
-if (QueryString.lang) {
-  if (QueryString.lang) {
-    lang = QueryString.lang;
-  }
-}
-
 function getCookie(cname) {
-  //QueryString.debug && console.debug(document.cookie);
+  QueryString.debug>1 && console.debug("getCookie",cname,document.cookie);
   let cookies = {};
   document.cookie.split(";").forEach(function(c){
     let ca = c.trim().split("=");
@@ -71,11 +64,13 @@ function getCookie(cname) {
       cookies[ca[0].trim()] = decodeURIComponent(ca[1]).trim();
     }
   });
-  //QueryString.debug && console.debug(cookies);
+  QueryString.debug>1 && console.debug("getCookie",cname,cookies);
+  QueryString.debug && console.debug("getCookie",cname,cookies[cname]);
   return cookies[cname];
 }
 function setCookie(cname,value) {
-  document.cookie = cname+"="+encodeURIComponent(value);
+  QueryString.debug && console.debug("setCookie",cname,value);
+  document.cookie = cname+"="+encodeURIComponent(value)+";max-age=31536000"; //max-age a year
 }
 
 // force refresh on version change
@@ -89,15 +84,16 @@ let file = new XMLHttpRequest();
 file.onreadystatechange = function() {
   if (file.readyState === XMLHttpRequest.DONE && file.status === 200) {
     QueryString.debug && console.debug("version",version,file.responseText);
-    if (version != file.responseText) {
+    let filejson = JSON.parse(file.responseText);
+    if (version != filejson.version) {
       QueryString.debug && console.debug("version","REFRESH");
       location.reload(true);
     }
-    version = file.responseText;
+    version = filejson.version;
     setCookie("version",version); //store
   }
 }
-file.open("GET", "build"+"?"+Math.random(), true);
+file.open("GET", "/api/"+"?"+Math.random(), true);
 file.send(null);
 
 // Credits: https://medium.com/better-programming/3-ways-to-clone-objects-in-javascript-f752d148054d

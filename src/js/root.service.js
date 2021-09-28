@@ -37,6 +37,7 @@ rootApp.service('DataService', ['$http', function($http) {
     for (let i=0;i<status.length;  i++) { paramURI+="&status="+   status[i]; }
     for (let i=0;i<survey.length;  i++) { paramURI+="&survey="+   survey[i]; }
     for (let i=0;i<userrole.length;i++) { paramURI+="&userrole="+ userrole[i]; }
+    // nb! contactdata values degree, group and location are NOT handled via supportneed API even though for some reason they are passed to it
     for (let i=0;i<degree.length;  i++) { paramURI+="&degree="+   degree[i]; }
     for (let i=0;i<group.length;   i++) { paramURI+="&group="+    group[i]; }
     for (let i=0;i<location.length;i++) { paramURI+="&location="+ location[i]; }

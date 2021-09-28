@@ -42,6 +42,7 @@ $.extend(true,CONFIG,{
         "supportneed": {}
     },
     //*/
+    "language": "fi",
 
     "i18n": {
         "title":"Annie.",
