@@ -1,0 +1,87 @@
+@import './variables.scss';
+
+.survey-header {
+  display: flex;
+  padding: 1.5rem 2rem;
+  align-items: center;
+  background-color: $white;
+  border-radius: $border-radius;
+  margin: 2rem 2rem 0 2rem;
+}
+
+.survey-header > .back {
+  margin-right: 2rem;
+}
+
+.survey-header a svg {
+  vertical-align: middle;
+}
+
+.survey-header .status {
+  margin-left: 2rem;
+}
+
+.save-toolbar {
+  display: flex;
+  margin-left: auto;
+}
+
+.unsaved-changes {
+  margin: 0 auto 0 2rem;
+  color: $grey-text;
+}
+
+.save-toolbar button {
+  margin-left: 1.5rem;
+  text-align: center;
+  border-radius: $admin-radius;
+  padding: 1rem 1.5rem;
+  font-weight: 600;
+  font-size: 1.4rem;
+  min-width: 8rem;
+  height: 4rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.save-toolbar button.save {
+  color: $white;
+  background-color: $main-color;
+}
+
+.save-toolbar button.cancel {
+  background-color: transparent;
+  color: $grey-text;
+  font-weight: 400;
+  padding: 0;
+  min-width: unset;
+}
+
+.save-toolbar button.cancel:hover {
+  color: $black;
+}
+
+.survey-summary-container {
+  margin-top: 2rem;
+}
+
+.survey-summary-container p {
+  margin-bottom: .5rem;
+}
+
+.fake-input {
+  border: $border;
+  border-radius: $admin-radius;
+  padding: .5rem 1rem;
+  margin-top: 0;
+  font-weight: 500;
+}
+
+.survey-summary-container .dual {
+  display: flex;
+}
+
+.survey-summary-container .dual > div:first-child {
+  margin-right: 1rem;
+}

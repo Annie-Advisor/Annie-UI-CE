@@ -5,12 +5,16 @@ import {ReactComponent as CloseIcon} from "./svg/close.svg";
 import {useIntl} from "react-intl";
 import {ReactComponent as ReplyIcon} from "./svg/reply.svg";
 import {ReactComponent as ErrorIcon} from "./svg/error.svg";
-import React, {useEffect, useRef} from "react";
+import {ReactComponent as SuccessIcon} from "./svg/success.svg";
+import {ReactComponent as FailIcon} from "./svg/fail.svg";
+import React, {useEffect, useRef, useState} from "react";
 
-export function Skeleton( {height, width, circle, inline} ) {
+export function Skeleton( {height, width, circle, inline, noMargin, classText} ) {
     let className = "skeleton"
     if (inline || width) {className = className.concat(' inline')}
     if (circle) {className = className.concat(' circle')}
+    if (noMargin) {className = className.concat(' no-margin')}
+    if (classText) {className = className.concat(' '+classText)}
     return <span
         className={className}
         style={{height: height, width: width}}
@@ -67,23 +71,50 @@ export function StatusText({survey}) {
     </p>
 }
 
-export function Popover(props) {
+export function Popover({closePopover, children}) {
     const refPopover = useRef(null)
     useEffect(()=>{
         document.addEventListener("mousedown", handleClickOutside)
         function handleClickOutside(event) {
             if (refPopover.current && !refPopover.current.contains(event.target)) {
-                props.closePopover()
+                closePopover()
             }
             return () => {
                 document.removeEventListener("mousedown", handleClickOutside);
             }
         }
-    },[refPopover])
+    },[refPopover, closePopover])
     return <>
     <div ref={refPopover} className={"popover"}>
-        {props.children}
+        {children}
     </div>
+    </>
+}
+
+export function Popup({closePopup, children}) {
+    const refPopup = useRef(null)
+    useEffect(()=>{
+        document.addEventListener("mousedown", handleClickOutside)
+        function handleClickOutside(event) {
+            if (refPopup.current && !refPopup.current.contains(event.target)) {
+                closePopup()
+            }
+            return () => {
+                document.removeEventListener("mousedown", handleClickOutside);
+            }
+        }
+    },[refPopup, closePopup])
+    return <>
+        <div className={"popup-overlay"}>
+            <div ref={refPopup} className={"popup"}>
+                <div className={"close-toggle-container"}>
+                    <div className={"close-toggle"} onClick={closePopup}>
+                        <CloseIcon />
+                    </div>
+                </div>
+                {children}
+            </div>
+        </div>
     </>
 }
 
@@ -98,7 +129,10 @@ export function Modal(props) {
                 </div>
             </div>
             <h3>{props.header}</h3>
+            {props.text &&
             <p>{props.text}</p>
+            }
+            {props.children}
             <div className={"modal-options"}>
                 {props.discardText &&
                 <button onClick={props.discardAction} className={"discard alert"}>
@@ -121,28 +155,104 @@ export function Modal(props) {
 }
 
 export function getMessageIcon(props, isBranch) {
-    if (isBranch && props.data[props.keyValue].condition === ".*") {
-        return <ReplyIcon />
-    } else if (isBranch) {
-        return props.keyValue.slice(6)
-    } else if (props.keyValue === 'other') {
-        return <ErrorIcon />
-    } else {
-        return props.keyValue
+    if (props.hasOwnProperty('keyValue')) {
+        if ((isBranch && props.condition === ".*") || (props.hasOwnProperty('data') && props.data[props.keyValue].condition === ".*")) {
+            return <ReplyIcon/>
+        } else if (isBranch) {
+            return props.keyValue.slice(6)
+        } else if (props.keyValue === 'other') {
+            return <ErrorIcon/>
+        } else {
+            return props.keyValue
+        }
     }
+    return '?'
 }
 
 export function getBranchIconColor(props, isBranch) {
     if (isBranch && props.parentColor) {
         return shadeColor(props.parentColor, -props.i*10)
     } else if (isBranch) {
-       if (props.i % 5 === 0) { return "#1AB0F5" }
-        if (props.i % 5 === 1) { return "#FFA245" }
-        if (props.i % 5 === 2) { return "#1ECC92" }
-        if (props.i % 5 === 3) { return "#F75A52" }
-        if (props.i % 5 === 4) { return "#A20D50" }
-        return "#1AB0F5"
+        switch (props.keyValue.charAt(6)) {
+            case "A":
+                return "#8E99E4"
+            case "B":
+                return "#FF9650"
+            case "C":
+                return "#FFCE00"
+            case "D":
+                return "#FD779F"
+            case "E":
+                return "#007E71"
+            case "F":
+                return "#00469A"
+            case "H":
+                return "#8E99E4"
+            case "I":
+                return "#FF9650"
+            case "J":
+                return "#FFCE00"
+            case "K":
+                return "#FD779F"
+            case "L":
+                return "#007E71"
+            case "M":
+                return "#00469A"
+            default:
+                return "#8E99E4"
+        }
+        /*
+       if (props.i % 6 === 0) { return "#8E99E4" }
+        if (props.i % 6 === 1) { return "#FF9650" }
+        if (props.i % 6 === 2) { return "#FFCE00" }
+        if (props.i % 6 === 3) { return "#FD779F" }
+        if (props.i % 6 === 4) { return "#007E71" }
+        if (props.i % 6 === 5) { return "#00469A" }
+        return "#8E99E4"
+        */
     } else {
-        return "#BFBFBF"
+        return "#ADADAD"
     }
+}
+
+export function Toast({show, text, status, dismiss, hideToast}) {
+    let className = "toast"
+    let icon
+    if (status === "success") {
+        className = className.concat(' success')
+        icon = <SuccessIcon/>
+    }
+    if (status === "alert") {
+        className = className.concat(' alert')
+        icon = <FailIcon/>
+    }
+    if (!dismiss) {
+        setTimeout(()=> {
+            disappear()
+        }, 5000)
+    }
+    function disappear() {
+        /*className = className.concat(' disappear')
+        setTimeout(()=> {
+
+        }, 300)*/
+        hideToast()
+    }
+    return <>
+        {show &&
+        <div className={className}>
+            <p>
+                {icon &&
+                <span className={"icon"}>{icon}</span>
+                }
+                <span>{text}</span>
+            </p>
+            {dismiss &&
+            <div className={"close"} onClick={()=>disappear()}>
+                <CloseIcon />
+            </div>
+            }
+        </div>
+        }
+    </>
 }

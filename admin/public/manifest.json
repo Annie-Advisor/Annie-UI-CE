@@ -1,6 +1,6 @@
 {
-  "short_name": "Management Console",
-  "name": "Annie Advisor Management Console",
+  "short_name": "Annie Admin",
+  "name": "Annie Admin",
   "icons": [
     {
       "src": "favicon.ico",

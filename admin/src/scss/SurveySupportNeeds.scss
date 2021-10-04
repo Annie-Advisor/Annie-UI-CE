@@ -1,0 +1,197 @@
+@import './variables.scss';
+
+.support-needs-container {
+  margin-bottom: 4rem;
+}
+
+.branch-container {
+  display: flex;
+}
+
+.support-categories {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.support-need-group {
+  display: grid;
+  grid-template-columns: 25% 50% 25%;
+  grid-gap: 1rem;
+  background-color: $white;
+  border-radius: $border-radius;
+  padding: 2rem;
+}
+
+.support-need-group {
+  margin-bottom: 1rem;
+}
+
+.support-provider.block {
+  margin-bottom: 1rem;
+  background-color: $beige;
+  color: $blue-text;
+  cursor: pointer;
+}
+
+.support-provider.block.not-assigned {
+  background-color: unset;
+  color: $grey-text;
+}
+
+.support-provider.block.not-assigned:hover {
+  color: $black;
+}
+
+.support-container {
+  display: flex;
+  align-items: flex-start;
+}
+
+.support-container .icon {
+  margin-right: 1rem;
+}
+
+.support-providers-container {
+  margin-bottom: -1rem;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.support-needs-container .message-icon {
+  margin-bottom: 1rem;
+}
+
+.new-support-need {
+  display: flex;
+}
+
+.new-support-need-container input[type="text"].add-element {
+  margin: 0;
+  border: 1px solid $grey-on-grey;
+  box-shadow: none;
+  border-bottom-right-radius: 0;
+  border-top-right-radius: 0;
+  border-right: 0;
+  font-size: 1.4rem;
+}
+
+.new-support-need-container input[type="text"].add-element:focus {
+  border-color: $dark-grey;
+}
+
+button.commit {
+  width: 4rem;
+  font-weight: 600;
+  background-color: $green;
+  color: $white;
+  border-radius: $border-radius;
+}
+
+button.commit:hover {
+  background-color: $green-hover;
+}
+
+.new-support-need-container button.commit {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  width: 5.7rem;
+  font-size: 1.6rem;
+}
+
+.new-support-need-container {
+  margin-top: 3rem;
+}
+
+.support-container .icon {
+  margin-top: 1rem;
+  height: 2.2rem;
+}
+
+.support-container .icon svg {
+  vertical-align: middle;
+}
+
+.remove-element {
+  margin-top: 3rem;
+  margin-bottom: -1rem;
+}
+
+.red {
+  color: $red;
+}
+
+.remove-element .red {
+  cursor: pointer;
+}
+
+.remove-element .red:hover {
+  text-decoration: underline;
+}
+
+.survey-coordinators .block, .support-provider.block {
+  cursor: initial;
+  display: flex;
+  margin-bottom: 1rem;
+  align-items: center;
+  width: max-content;
+}
+
+.survey-coordinators .block .close-icon, .support-provider.block .close-icon {
+  margin: auto 0 auto 1rem;
+  cursor: pointer;
+}
+
+.survey-coordinators .block .close-icon svg, .support-provider.block .close-icon svg {
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+.survey-coordinators .block .close-icon svg *, .support-provider.block .close-icon svg * {
+  stroke: #1f2659;
+}
+
+.survey-coordinators .placeholder {
+  margin-top: 0;
+}
+
+.support-needs-container .popup input[type="text"] {
+  margin-bottom: 1rem;
+  font-size: 1.4rem;
+  padding: 1rem 1.5rem;
+}
+
+button.support-provider.block.not-assigned.add-provider {
+  cursor: pointer;
+}
+
+.support-provider.block.selected:hover {
+  background-color: $beige-hover;
+  border: 1px solid $blue-text;
+  color: $blue-text;
+  cursor: pointer;
+}
+
+.support-needs-container .popup .block-container {
+  max-height: 52vh;
+  overflow-y: auto;
+  border: $border;
+  border-radius: $admin-radius;
+  padding: 1rem 1rem 0;
+}
+
+.modal-options button.text {
+  margin-left: 0;
+  padding: 0;
+  border: 0;
+  background-color: transparent;
+  font-weight: 500;
+}
+
+.modal-options button.text + .text {
+  margin-left: 2rem;
+}
+
+.support-needs-container .modal-options button.cancel {
+  margin-left: auto;
+}

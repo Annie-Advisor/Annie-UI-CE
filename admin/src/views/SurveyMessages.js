@@ -11,20 +11,24 @@ import {ReactComponent as ReplyIcon} from "../svg/reply.svg";
 import {ReactComponent as SupportIcon} from "../svg/support.svg";
 import {ReactComponent as ErrorIcon} from "../svg/error.svg";
 import {ReactComponent as MessageIcon} from "../svg/message.svg";
-import {getBranchIconColor, getMessageIcon, Modal, Popover} from "../UIElements";
-import {useSurveyData} from "./SurveyView";
+import {getBranchIconColor, getMessageIcon, Modal, Popover, Popup} from "../UIElements";
+import {useCodesData, useSurveyData} from "./SurveyView";
+import {setSupportNeedStatus} from "../DataFunctions";
+import {SupportNeedSelector} from "./SurveySupportNeeds";
 
 export default function SurveyMessages() {
     const {surveyData} = useSurveyData()
     const [messageContentOpen, setMessageContentOpen] = useState(true)
-    const [showJson, setShowJson] = useState(false)
-    const [jsonCopied, setJsonCopied] = useState(false)
-    {jsonCopied &&
-        setTimeout(() => {setJsonCopied(false)},3000)
-    }
-    // TODO: Remove all temp-admin stuff
+    const intl = useIntl()
 
     return <>
+        <h4>
+            {intl.formatMessage(
+                {
+                    id: 'survey.navigation.messages',
+                    defaultMessage: 'Messages',
+                })}
+        </h4>
         <div className={"messages"}>
             {messageContentOpen ? <>
                 <div className={"message-container has-steps"}>
@@ -33,35 +37,24 @@ export default function SurveyMessages() {
                             <MessageIcon />
                         </div>
                         <div className={"message-content"}>
-                            <EditableContent text={surveyData.config.message} data={surveyData.config} keyValue={"message"}
+                            <EditableContent text={surveyData.config.message} data={surveyData.config} keyValue={"message"} message={"firstMessage"}
                                              depth={0}/>
                         </div>
                     </div>
                     <div className={"message-children"}>
-                        <GetMessages data={surveyData.config} depth={1}/>
+                        <GetMessages data={surveyData.config} depth={1} />
                     </div>
                     <MessageToolbar data={surveyData.config} depth={1}/>
                 </div>
                 </> :
                 <div className={"message"}>
-                    <div className={"message-icon"} onClick={() => setMessageContentOpen(!messageContentOpen)}>Q</div>
+                    <div className={"message-icon"} onClick={() => setMessageContentOpen(!messageContentOpen)}>
+                        <MessageIcon />
+                    </div>
                     <div className={"show-message"} onClick={() => setMessageContentOpen(true)}>
                         <ShowExtraIcon />
                     </div>
                 </div>
-            }
-        </div>
-        <div className={"temp-admin"}>
-            <h3>Temporary admin stuff v.1.03</h3>
-            <button onClick={()=> {
-                navigator.clipboard.writeText(JSON.stringify(surveyData))
-                    setJsonCopied(true)
-            }}>Copy JSON</button>
-            <button onClick={()=>setShowJson(!showJson)}>{showJson ? "Hide JSON" : "Show JSON"}</button>
-            {jsonCopied &&
-            <p>JSON copied!</p>}
-            {showJson &&
-            <div className={"json"}><code>{JSON.stringify(surveyData, null, 2)}</code></div>
             }
         </div>
     </>
@@ -69,9 +62,17 @@ export default function SurveyMessages() {
 
 function GetMessages(props) {
     return <>
-        {Object.keys(props.data).filter(key => key.startsWith('branch') || key === 'other')
+        {Object.keys(props.data).filter(key => key.startsWith('branch') || key === 'other').sort()
             .map( (keyValue, i) => {
-                return <Message data={props.data} parentColor={props.parentColor} keyValue={keyValue} i={i} key={i} depth={props.depth} parent={props.parent} parentsParent={props.parentsParent} parentsParentsParent={props.parentsParentsParent}/>
+                if (props.data[keyValue].condition === ".*") {
+                    return <Message message={"replyMessage"} data={props.data} parentColor={props.parentColor} keyValue={keyValue} i={i} key={i} depth={props.depth} parent={props.parent} parentsParent={props.parentsParent} parentsParentsParent={props.parentsParentsParent}/>
+                }
+                switch (keyValue) {
+                    case "other":
+                        return <Message message={"errorMessage"} data={props.data} parentColor={props.parentColor} keyValue={keyValue} i={i} key={i} depth={props.depth} parent={props.parent} parentsParent={props.parentsParent} parentsParentsParent={props.parentsParentsParent}/>
+                    default:
+                        return <Message data={props.data} parentColor={props.parentColor} keyValue={keyValue} i={i} key={i} depth={props.depth} parent={props.parent} parentsParent={props.parentsParent} parentsParentsParent={props.parentsParentsParent}/>
+                }
             })}
     </>
 }
@@ -96,12 +97,10 @@ function Message(props) {
             <div className={"message-icon"} onClick={() => setMessageContentOpen(!messageContentOpen)} style={{backgroundColor:color}}>{icon}</div>
             <div className={"message-content"}>
                 <div>
-                    <EditableContent text={props.data[props.keyValue].message} data={props.data} keyValue={props.keyValue} depth={props.depth} parent={props.parent} parentsParent={props.parentsParent} parentsParentsParent={props.parentsParentsParent}/>
+                    <EditableContent message={props.message} text={props.data[props.keyValue].message} data={props.data} keyValue={props.keyValue} depth={props.depth} parent={props.parent} parentsParent={props.parentsParent} parentsParentsParent={props.parentsParentsParent}/>
                     <OptionsPopUp data={props.data} keyValue={props.keyValue} depth={props.depth} parent={props.parent} parentsParent={props.parentsParent} parentsParentsParent={props.parentsParentsParent}/>
                 </div>
-                {isBranch &&
-                    <SupportNeedTools data={props.data} keyValue={props.keyValue} depth={props.depth} parent={props.parent} parentsParent={props.parentsParent} parentsParentsParent={props.parentsParentsParent}/>
-                }
+                <SupportNeedTools data={props.data} keyValue={props.keyValue} depth={props.depth} parent={props.parent} parentsParent={props.parentsParent} parentsParentsParent={props.parentsParentsParent}/>
             </div>
         </div>
         {
@@ -134,68 +133,82 @@ function Message(props) {
 
 function SupportNeedTools(props) {
     const {surveyData, setSurveyData} = useSurveyData()
-    let hasSupportNeed
-    let hasSupportNeedKey =  props.data[props.keyValue].hasOwnProperty('supportneed')
-    if (hasSupportNeedKey) {
-        hasSupportNeed = props.data[props.keyValue]["supportneed"]
-    } else {
-        hasSupportNeed = false
-    }
+    const {codesData} = useCodesData()
+    const intl = useIntl()
+    const [showPopup, setShowPopup] = useState(false)
+    let hasSupportNeed = props.data[props.keyValue].hasOwnProperty('supportneed') && props.data[props.keyValue]["supportneed"]
+    let hasCategoryName = codesData.hasOwnProperty(props.data[props.keyValue].category)
 
-    const toggleSupportNeed = () => {
+    const toggleSupportNeed = props => {
         const newSurveyData = {...surveyData}
-        if (hasSupportNeed) {
-            if (props.depth === 1) {
-                delete newSurveyData.config[props.keyValue]["supportneed"]
-                delete newSurveyData.config[props.keyValue]["category"]
-            }
-            if (props.depth === 2) {
-                delete newSurveyData.config[props.parent][props.keyValue]["supportneed"]
-                delete newSurveyData.config[props.parent][props.keyValue]["category"]
-            }
-            if (props.depth === 3) {
-                delete newSurveyData.config[props.parentsParent][props.parent][props.keyValue]["supportneed"]
-                delete newSurveyData.config[props.parentsParent][props.parent][props.keyValue]["category"]
-            }
-            if (props.depth === 4) {
-                delete newSurveyData.config[props.parentsParentsParent][props.parentsParent][props.parent][props.keyValue]["supportneed"]
-                delete newSurveyData.config[props.parentsParentsParent][props.parentsParent][props.parent][props.keyValue]["category"]
-            }
-        } else {
-            if (props.depth === 1) {
-                newSurveyData.config[props.keyValue]["supportneed"] = true
-                newSurveyData.config[props.keyValue]["category"] = props.keyValue.slice(6)
-            }
-            if (props.depth === 2) {
-                newSurveyData.config[props.parent][props.keyValue]["supportneed"] = true
-                newSurveyData.config[props.parent][props.keyValue]["category"] = props.keyValue.slice(6)
-            }
-            if (props.depth === 3) {
-                newSurveyData.config[props.parentsParent][props.parent][props.keyValue]["supportneed"] = true
-                newSurveyData.config[props.parentsParent][props.parent][props.keyValue]["category"] = props.keyValue.slice(6)
-            }
-            if (props.depth === 4) {
-                newSurveyData.config[props.parentsParentsParent][props.parentsParent][props.parent][props.keyValue]["supportneed"] = true
-                newSurveyData.config[props.parentsParentsParent][props.parentsParent][props.parent][props.keyValue]["category"] = props.keyValue.slice(6)
-            }
-        }
+        setSupportNeedStatus(hasSupportNeed, newSurveyData.config, props.depth, props.keyValue,  props.parent, props.parentsParent, props.parentsParentsParent)
         setSurveyData(newSurveyData)
     }
-    return <div className={"support-need-tools"}>
-        <SupportIcon/>
-        <input type={"checkbox"} onChange={toggleSupportNeed} className={"switch"} id={props.keyValue} defaultChecked={hasSupportNeed}
-               />
-        <label htmlFor={props.keyValue} className={"switch-label"} />
-    </div>
+
+    const inputId =  props.parent ? props.keyValue +"-"+ props.depth.toString() + "-" + props.parent : props.keyValue +"-"+ props.depth.toString()
+
+    return <>
+        <div className={"support-need-tools"}>
+            <SupportIcon/>
+            <input type={"checkbox"} onChange={()=>toggleSupportNeed(props)} className={"switch"} id={inputId} defaultChecked={hasSupportNeed}/>
+            <label htmlFor={inputId} className={"switch-label"} />
+            {hasSupportNeed &&
+                <div className={hasCategoryName ? "block" : "block not-assigned"} onClick={() => setShowPopup(true)}>
+                    {hasCategoryName ? codesData[props.data[props.keyValue].category][intl.locale] :
+                        intl.formatMessage({
+                                id: 'survey.chooseSupportNeed',
+                                defaultMessage: '+ Choose Support Need',
+                            })
+                    }
+                </div>
+            }
+        </div>
+        {showPopup &&
+        <Popup closePopup={() => setShowPopup(false)}>
+            <SupportNeedSelector need={props} closePopup={() => setShowPopup(false)}/>
+        </Popup>
+        }
+    </>
 }
 
 function EditableContent(props) {
     // TODO: check if code can be refactored, so that the nested level of the edited object is not done manually
+    const {surveyData, setSurveyData} = useSurveyData()
+    const intl = useIntl()
     const [editorState, setEditorState] = useState(
         () => EditorState.createWithContent(ContentState.createFromText(props.text)),
     )
-    const {surveyData, setSurveyData} = useSurveyData()
-    const intl = useIntl()
+    // Fixed bug where the text prop was different than the editors state when adding a new branch
+    if (editorState.getCurrentContent().getPlainText() !== props.text) {
+        setEditorState(EditorState.createWithContent(ContentState.createFromText(props.text)))
+    }
+    let placeholderText
+    switch (props.message) {
+        case "firstMessage":
+            placeholderText =  intl.formatMessage({
+                id: 'survey.message.placeholder.first',
+                defaultMessage: 'This is the first message to the student! Click to type, and maybe start with a greeting? :)',
+            })
+            break
+        case "errorMessage":
+            placeholderText =  intl.formatMessage({
+                id: 'survey.message.placeholder.error',
+                defaultMessage: 'Write an error message for mistyped answers',
+            })
+            break
+        case "replyMessage":
+            placeholderText =  intl.formatMessage({
+                id: 'survey.message.placeholder.reply',
+                defaultMessage: 'Type a finishing reply or a thank you for answering',
+            })
+            break
+        default:
+            placeholderText =  intl.formatMessage({
+                id: 'survey.message.placeholder',
+                defaultMessage: 'Click to type your message',
+            })
+    }
+
     const editorUpdate = e => {
         setEditorState(e)
         const newSurveyData = {...surveyData}
@@ -215,19 +228,20 @@ function EditableContent(props) {
             newSurveyData.config[props.parentsParentsParent][props.parentsParent][props.parent][props.keyValue].message = e.getCurrentContent().getPlainText()
         }
         setSurveyData(newSurveyData)
+
     }
-    return <Editor editorState={editorState} onChange={editorUpdate} placeholder={intl.formatMessage(
-        {
-            id: 'survey.message.placeholder',
-            defaultMessage: 'Click to type your message',
-        })} />
+    return <Editor editorState={editorState} onChange={editorUpdate} placeholder={placeholderText} stripPastedStyles={true}/>
 }
 
-function  OptionsPopUp(props) {
+function OptionsPopUp(props) {
     const [popoverOpen, setPopoverOpen] = useState(false)
     const [confirmModalOpen, setConfirmModalOpen] = useState(false)
     const intl = useIntl()
     const {surveyData, setSurveyData} = useSurveyData()
+    let isBranch = props.keyValue.startsWith('branch')
+    let branches = Object.keys(props.data).filter(key => key.startsWith('branch'))
+    let lastBranch = branches[branches.length -1]
+    let isLastBranch = lastBranch === props.keyValue
     const deleteMessage = () => {
         const newSurveyData = {...surveyData}
         if (props.depth === 1) {
@@ -245,18 +259,18 @@ function  OptionsPopUp(props) {
         setSurveyData(newSurveyData)
         setConfirmModalOpen(false)
     }
-
-    return <div className={"options-popover popover-container"}>
-        <div className={"popover-toggle"} onClick={() => setPopoverOpen(true)}>
-            <OptionsIcon />
-        </div>
-        {popoverOpen &&
+    if (!isBranch || isLastBranch) {
+        return <div className={"options-popover popover-container"}>
+            <div className={"popover-toggle"} onClick={() => setPopoverOpen(true)}>
+                <OptionsIcon/>
+            </div>
+            {popoverOpen &&
             <Popover closePopover={() => setPopoverOpen(false)}>
                 <div className={"delete"} onClick={() => {
                     setConfirmModalOpen(true)
                     setPopoverOpen(false)
                 }}>
-                    <DeleteIcon />
+                    <DeleteIcon/>
                     {intl.formatMessage(
                         {
                             id: 'survey.message.deleteMessage',
@@ -264,12 +278,12 @@ function  OptionsPopUp(props) {
                         })}
                 </div>
             </Popover>
-        }
-        {confirmModalOpen &&
+            }
+            {confirmModalOpen &&
             <Modal header={intl.formatMessage(
                 {
                     id: 'survey.message.delete.header',
-                    defaultMessage:  "Are you sure you want to delete this step?",
+                    defaultMessage: "Are you sure you want to delete this step?",
                 })}
                    text={intl.formatMessage(
                        {
@@ -282,14 +296,17 @@ function  OptionsPopUp(props) {
                            defaultMessage: 'Delete',
                        })}
                    alert
-                closeModal={() => {
-                setConfirmModalOpen(false)
-            }} confirmAction={() => deleteMessage()} />
-        }
-    </div>
+                   closeModal={() => {
+                       setConfirmModalOpen(false)
+                   }} confirmAction={() => deleteMessage()}/>
+            }
+        </div>
+    }
+    return null
 }
 
 function MessageToolbar(props) {
+    //TODO: Refactor to remove repetition
     const [toolbarOpen, setToolbarOpen] = useState(false)
     const {surveyData, setSurveyData} = useSurveyData()
     const intl = useIntl()
@@ -324,7 +341,7 @@ function MessageToolbar(props) {
             nextBranch = parentLetter + 1
         }
     }
-    if (props.depth > 2) {
+    if (props.depth === 3) {
         let subBranches = Object.keys(props.data[props.keyValue]).filter(key => key.startsWith('branch'))
         if (subBranches && subBranches.length > 0) {
             let letters = subBranches.map(key => key.slice(6)).sort()
@@ -363,12 +380,12 @@ function MessageToolbar(props) {
                 let nextKey = lastKey.substring(0, lastKey.length - 1)
                     + String.fromCharCode(lastKey.charCodeAt(lastKey.length - 1) + 1)
                 newSurveyData.config["branch" + nextKey] = {
-                    condition: "^[" + nextKey.toLowerCase() + nextKey.toUpperCase() + "]$",
+                    condition: "^[" + nextKey.toLowerCase() + nextKey.toUpperCase() + "]\\b",
                     message: ""
                 }
             } else {
                 newSurveyData.config["branchA"] = {
-                    condition: "^[aA]$",
+                    condition: "^[aA]\\b",
                     message: ""
                 }
             }
@@ -383,14 +400,14 @@ function MessageToolbar(props) {
                 let nextKey = parentLetter + nextNumber
                 let parentCondition = parentLetter.toLowerCase() + parentLetter.toUpperCase()
                 newSurveyData.config[props.keyValue]["branch" + nextKey] = {
-                    condition: "^[" + parentCondition + "]" + nextNumber + "$",
+                    condition: "^[" + parentCondition + "]" + nextNumber + "\\b",
                     message: ""
                 }
             } else {
                 let parentLetter = props.keyValue.slice(6)
                 let parentCondition = parentLetter.toLowerCase() + parentLetter.toUpperCase()
                 newSurveyData.config[props.keyValue]["branch" + parentLetter +"1"] = {
-                    condition: "^[" + parentCondition + "]1$",
+                    condition: "^[" + parentCondition + "]1\\b",
                     message: ""
                 }
             }
@@ -405,7 +422,7 @@ function MessageToolbar(props) {
                 let nextKey = parentLetter + nextNumber
                 let parentCondition = parentLetter.toLowerCase() + parentLetter.toUpperCase()
                 newSurveyData.config[props.parentsParent][props.parent]["branch" + nextKey] = {
-                    condition: "^[" + parentCondition + "]" + nextNumber + "$",
+                    condition: "^[" + parentCondition + "]" + nextNumber + "\\b",
                     message: ""
                 }
             } else {
@@ -413,7 +430,7 @@ function MessageToolbar(props) {
                 let parentCondition = parentLetter.toLowerCase() + parentLetter.toUpperCase()
                 let parentNumber = props.parent.slice(7)
                 newSurveyData.config[props.parentsParent][props.parent]["branch" + parentLetter + parentNumber +"1"] = {
-                    condition: "^[" + parentCondition + "]" + parentNumber + "1$",
+                    condition: "^[" + parentCondition + "]" + parentNumber + "1\\b",
                     message: ""
                 }
             }
@@ -428,7 +445,7 @@ function MessageToolbar(props) {
                 let nextKey = parentLetter + nextNumber
                 let parentCondition = parentLetter.toLowerCase() + parentLetter.toUpperCase()
                 newSurveyData.config[props.parentsParentsParent][props.parentsParent][props.parent]["branch" + nextKey] = {
-                    condition: "^[" + parentCondition + "]" + nextNumber + "$",
+                    condition: "^[" + parentCondition + "]" + nextNumber + "\\b",
                     message: ""
                 }
             } else {
@@ -436,7 +453,7 @@ function MessageToolbar(props) {
                 let parentCondition = parentLetter.toLowerCase() + parentLetter.toUpperCase()
                 let parentNumber = props.parent.slice(7)
                 newSurveyData.config[props.parentsParentsParent][props.parentsParent][props.parent]["branch" + parentLetter + parentNumber +"1"] = {
-                    condition: "^[" + parentCondition + "]" + parentNumber + "1$",
+                    condition: "^[" + parentCondition + "]" + parentNumber + "1\\b",
                     message: ""
                 }
             }
@@ -533,7 +550,10 @@ function MessageToolbar(props) {
         {toolbarOpen &&
         <div className={"toolbar-option"}>
             {props.depth < 5 && !optionLimitFull &&
-            <button className={"option"} onClick={() => addBranch()}>
+            <button className={"option"} onClick={() => {
+                addBranch()
+                !hasOtherOption && addOther()
+            }}>
                 <div className={"icon"} style={{backgroundColor: color}}>{nextBranch}</div>
                 <div className={"text"}>{intl.formatMessage(
                     {

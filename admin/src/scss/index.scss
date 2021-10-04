@@ -34,6 +34,13 @@ h3 {
   font-weight: 600;
 }
 
+h4 {
+  font-size: 1.4rem;
+  margin: 0 0 1em;
+  font-weight: 600;
+  color: $blue-text;
+}
+
 a {
   color: inherit;
   text-decoration: inherit;
@@ -80,6 +87,8 @@ input::-ms-input-placeholder {
   color: $placeholder-color;
 }
 
+
+
 select {
   -webkit-appearance: none;
   appearance: none;
@@ -100,11 +109,15 @@ select {
   background-position: right 1.5rem top 50%;
 }
 
+input:disabled, select:disabled {
+  cursor: not-allowed;
+}
+
 button {
   cursor: pointer;
 }
 
-button, input {
+button, input:not([type='checkbox']) {
   -webkit-appearance: none;
   appearance: none;
   -webkit-box-shadow: none;
@@ -116,7 +129,51 @@ button, input {
 }
 
 button::-moz-focus-inner,
-input::-moz-focus-inner {
+input:not([type='checkbox'])::-moz-focus-inner {
   border: 0;
   padding: 0;
+}
+
+input[type='checkbox'] {
+  width: 1.6rem;
+  height: 1.6rem;
+  margin: 0;
+  vertical-align: middle;
+}
+
+button.button {
+  border-radius: 4px;
+  padding: 1rem 1.5rem;
+  background-color: $light-grey;
+  border: 1px solid $grey;
+  font-weight: 600;
+  font-size: 1.4rem;
+}
+
+button.button:hover {
+  background-color: $light-grey-on-grey;
+}
+
+button.alert {
+  color: $white;
+  background-color: $red;
+  border-color: $red;
+}
+
+button.text {
+  font-weight: 600;
+  background-color: unset;
+  padding: 0;
+}
+
+button.text:hover {
+  text-decoration: underline;
+}
+
+.not-found {
+  cursor: help;
+}
+
+.placeholder {
+  color: $grey-text;
 }

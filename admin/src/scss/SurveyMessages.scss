@@ -182,9 +182,16 @@
 }
 
 .support-need-tools {
-  margin-top: 1.5rem;
+  margin-top: 1.2rem;
+  align-items: center;
+  min-height: 4.3rem;
+  margin-bottom: -.7rem;
 }
 
 .support-need-tools .switch-label {
+  margin-left: 1rem;
+}
+
+.support-need-tools > div {
   margin-left: 1rem;
 }

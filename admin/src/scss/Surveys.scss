@@ -1,6 +1,6 @@
 @import './variables.scss';
 
-.surveys {
+.surveys-container {
   display: flex;
   flex-wrap: wrap;
 }
@@ -8,7 +8,8 @@
 .survey {
   border-radius: $border-radius;
   background-color: $white;
-  width: 17.5rem;
+  width: 20rem;
+  height: 26rem;
   margin: 0 2rem 2rem 0;
   display: flex;
   flex-direction: column;
@@ -19,8 +20,7 @@
 }
 
 .survey:hover {
-  transform: scale(1.03);
-  box-shadow: $box-shadow-hover;
+  background-color: $light-grey;
 }
 
 .survey.draft {
@@ -41,9 +41,13 @@
 
 .survey h3 {
   margin: 0 0 2rem;
-  font-size: 1.6rem;
+  font-size: 1.5rem;
   font-weight: 500;
-  word-wrap: break-word;
+  overflow: hidden;
+  display: -webkit-box;
+  overflow-wrap: break-word;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
 }
 
 .survey p {
@@ -100,6 +104,10 @@
   margin-left: 1.5rem;
 }
 
+.search-sort-surveys .margin-left {
+  margin-left: auto;
+}
+
 .sort-order {
   cursor: pointer;
   width: 4rem;
@@ -118,4 +126,58 @@
 
 .search-sort-surveys .search {
   margin-left: 3rem;
+}
+
+.search-group {
+  margin-bottom: 1rem;
+  user-select: none;
+}
+
+.group-divider {
+  border-bottom: 1px solid $border-color;
+  color: $darker-grey;
+  margin-bottom: 2rem;
+  cursor: pointer;
+}
+
+.group-divider p {
+  margin: 0 0 .6rem;
+}
+
+.group-divider:hover p {
+  color: $grey-text;
+}
+
+.group-divider .chevron {
+  margin-right: .5rem;
+}
+
+.group-divider .chevron.closed svg {
+  transform: rotate(-90deg);
+}
+
+.group-divider .chevron svg path {
+  stroke: $darker-grey;
+}
+
+.group-divider:hover .chevron svg path {
+  stroke: $grey-text;
+}
+
+.surveys .popup p {
+  font-size: 1.4rem;
+}
+
+.surveys .popup h1 {
+  font-size: 2rem;
+  margin: 0 0 2rem;
+}
+
+.surveys .popup input[type="checkbox"] {
+  margin-right: .5rem;
+}
+
+.surveys .options-container > div {
+  margin-bottom: 1rem;
+  vertical-align: middle;
 }

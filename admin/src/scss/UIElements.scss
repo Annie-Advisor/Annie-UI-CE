@@ -16,6 +16,10 @@
   display: inline-block;
 }
 
+.skeleton.no-margin {
+  margin: 0;
+}
+
 @keyframes pulse {
   0% {background-color: $transparent-grey;}
   100% {background-color: $light-grey;}
@@ -205,4 +209,114 @@ input[type="checkbox"].switch {
 
 .switch[checked] + .switch-label::after {
   margin-left: auto;
+}
+
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: $overlay;
+  z-index: 10;
+  display: flex;
+  padding: 4rem;
+}
+
+.popup {
+  margin: auto;
+  background-color: $white;
+  padding: 5rem 4rem;
+  border-radius: $admin-radius;
+  border: $border;
+  max-width: 80rem;
+  max-height: calc(100vh - 10rem);
+  overflow-y: auto;
+}
+
+.popup .close-toggle-container {
+  display: flex;
+}
+
+.popup .close-toggle {
+  margin-left: auto;
+  cursor: pointer;
+  margin-top: -3rem;
+  margin-right: -2rem;
+}
+
+.popup .close-toggle svg * {
+  stroke: $black;
+}
+
+.toast {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  margin: 4rem;
+  background-color: $light-blue;
+  border-radius: $admin-radius;
+  color: $blue-text;
+  box-shadow: $box-shadow;
+  display: flex;
+  align-items: center;
+  padding: 1rem 2rem;
+  font-weight: 600;
+  font-size: 1.4rem;
+  min-width: 20rem;
+  z-index: 10;
+  animation: .3s appear ease-out;
+}
+
+@keyframes appear {
+  0% {transform: translateY(calc(100% + 8rem))}
+  100% {transform: translateY(0)}
+}
+
+.toast.disappear {
+  animation: .3s disappear ease-out;
+}
+
+@keyframes disappear {
+  0% {transform: translateY(0)}
+  100% {transform: translateY(calc(100% + 8rem))}
+}
+
+.toast p {
+  margin-right: 4rem;
+  display: flex;
+  align-items: center;
+}
+
+.toast p .icon {
+  margin-right: 2rem;
+}
+
+.toast .close svg * {
+  stroke: $blue-text;
+}
+
+.toast .close {
+  margin-left: auto;
+  cursor: pointer;
+}
+
+.toast.success {
+  background-color: $light-green;
+  color: $dark-green;
+  border: 1px solid $green;
+}
+
+.toast.success svg * {
+  stroke: $dark-green;
+}
+
+.toast.alert {
+  background-color: $light-red;
+  color: $dark-red;
+  border: 1px solid $red;
+}
+
+.toast.alert svg * {
+  stroke: $dark-red;
 }

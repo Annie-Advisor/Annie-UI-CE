@@ -1,14 +1,18 @@
 import React, {useContext, useEffect, useMemo, useState} from "react";
 import '../scss/SurveyView.scss';
-import {Link, NavLink, Redirect, Route, Switch, useParams, useRouteMatch, useHistory, Prompt} from "react-router-dom";
-import {GetSurveyWithId, PostSurveyWithId, UpdateSurveyWithId} from "../api/APISurvey";
+import {Link, NavLink, Redirect, Route, Switch, useParams, useRouteMatch, useHistory, Prompt, useLocation} from "react-router-dom";
+import {
+    GetCodes, GetContacts,
+    GetSurveyWithId, GetUserBySurvey, GetUsers,
+} from "../api/APISurvey";
 import {FormattedMessage, useIntl} from "react-intl";
-import {getBranchIconColor, getMessageIcon, Modal, Popover, Skeleton, StatusText} from "../UIElements";
+import {getBranchIconColor, getMessageIcon, Modal, Popover, Skeleton, StatusText, Toast} from "../UIElements";
 import {ReactComponent as BackArrow} from "../svg/back.svg";
 import DatePicker, {registerLocale} from "react-datepicker"
 import "react-datepicker/dist/react-datepicker.css";
 import fi from "date-fns/locale/fi";
 import {dateToServerFormat, formatDate, updateTimeToServerFormat} from "../Formats";
+import SurveyHeader from "./SurveyHeader";
 import SurveyMessages from "./SurveyMessages";
 import {ReactComponent as LoaderIcon} from "../svg/loader.svg";
 import {ReactComponent as ReminderIcon} from "../svg/reminder.svg";
@@ -20,7 +24,10 @@ import {ReactComponent as MessageIcon} from "../svg/message.svg";
 import {ReactComponent as MinimizeIcon} from "../svg/minimize.svg";
 import {ReactComponent as PathsIcon} from "../svg/paths.svg";
 import _ from "lodash"
-import {LocaleContext} from "../LocaleContext";
+import {ReactComponent as SupportIcon} from "../svg/support.svg";
+import SurveySupportNeeds from "./SurveySupportNeeds";
+import SurveyRecipients from "./SurveyRecipients";
+import {ReactComponent as CloseIcon} from "../svg/close.svg";
 registerLocale("fi", fi)
 
 const SurveyContext = React.createContext({
@@ -30,56 +37,128 @@ const SurveyContext = React.createContext({
         endtime: "",
         id: "",
         starttime: "",
-        status: null,
+        status: "DRAFT",
         updated: "",
         updatedby: ""
     },
     setSurveyContext: () => {}
 })
 
-const newSurveyData = [{
-    "id": "new",
-    "updated": "",
-    "updatedby": "Annie",
-    "starttime": dateToServerFormat(new Date()),
-    "endtime": dateToServerFormat(new Date()),
-    "config": {
-        "name": {
+const OriginalSurveyContext = React.createContext({
+    originalSurveyContext: {},
+    setOriginalSurveyContext: () => {}
+})
+
+const UserContext = React.createContext({
+    userContext: {},
+    setUserContext: () => {}
+})
+
+const UserSurveyContext = React.createContext({
+    userSurveyContext: {},
+    setUserSurveyContext: () => {}
+})
+
+const OriginalUserSurveyContext = React.createContext({
+    originalUserSurveyContext: {},
+    setOriginalUserSurveyContext: () => {}
+})
+
+const CodesContext = React.createContext({
+    codesContext: {},
+    setCodesContext: () => {}
+})
+
+const ContactsContext = React.createContext({
+    contactsContext: {},
+    setContactsContext: () => {}
+})
+
+const newSurveyData = {
+    id: "new",
+    updated: "",
+    updatedby: "Annie",
+    starttime: dateToServerFormat(new Date()),
+    endtime: dateToServerFormat(new Date()),
+    config: {
+        name: {
             "en": "",
             "fi": ""
         },
-        "message": ""
+        message: ""
     },
-    "status": "DRAFT",
-    "contacts": null
-}]
+    status: "DRAFT",
+    contacts: []
+}
 
 export default function SurveyView() {
     let { surveyId } = useParams()
-    const {status, data, error} = surveyId === "new" ? {status: "success", data: newSurveyData, error: null} : GetSurveyWithId(surveyId)
-    let surveyData
-    let storageData
-    let originalData
-    if (status !== "loading" && status !== "error") {
-        originalData = _.cloneDeep(data[0])
-        surveyData = _.cloneDeep(data[0])
+    // Get survey data and store it in local storage
+    const getSurveyData = GetSurveyWithId(surveyId)
+    let surveyData, storageData, originalData
+    if (getSurveyData.status === "success") {
+        const useData = surveyId === "new" ? newSurveyData : getSurveyData.data[0]
+        originalData = _.cloneDeep(useData)
+        surveyData = _.cloneDeep(useData)
         if (localStorage.getItem("stored-"+surveyData.id)) {
             storageData = JSON.parse(localStorage.getItem("stored-"+surveyData.id))
-            if (storageData.updated >= surveyData.updated) {
+            if (storageData && surveyData && storageData.updated >= surveyData.updated) {
                 surveyData = storageData
             }
         }
+    }
+    // Get annie users
+    const getUserData = GetUsers()
+    let userData
+    if (getUserData.status === "success") {
+        userData = _.cloneDeep(getUserData.data)
+    }
+    // Get annie user survey data by surveyId
+    const getUserSurveyData = GetUserBySurvey(surveyId)
+    let userSurveyData, userSurveyStorageData, originalUserSurveyData
+    if (getUserSurveyData.status === "success") {
+        userSurveyData = _.cloneDeep(getUserSurveyData.data)
+        originalUserSurveyData = _.cloneDeep(getUserSurveyData.data)
+        if (localStorage.getItem("userSurveyData-"+surveyId)) {
+            userSurveyStorageData = JSON.parse(localStorage.getItem("userSurveyData-"+surveyId))
+            if (storageData && surveyData && storageData.updated >= surveyData.updated) {
+                userSurveyData = userSurveyStorageData
+            }
+        }
+    }
+    // Get support need category codes
+    const getCodesData = GetCodes()
+    let codesData
+    if (getCodesData.status === "success") {
+        codesData = getCodesData.data.find(obj => obj.hasOwnProperty('category')).category
+    }
+    // Get contacts
+    const getContactsData = GetContacts()
+    let contactsData
+    if (getContactsData.status === "success") {
+        contactsData = _.cloneDeep(getContactsData.data)
+    }
+    // Make sure that everything is loaded
+    let statusCheck
+    if (getSurveyData.status === "success" && getUserData.status === "success" && getUserSurveyData.status === "success" && getCodesData.status === "success" && getContactsData.status === "success") {
+        statusCheck = true
     }
 
     return <>
         <div className={"survey-container"}>
             {
-                // TODO: Create skeleton elements for when loading data
-                status === "loading" ? <span>Loading</span> :
-                    status === "error" ? <span>Error: {error.message}</span> :
-                        <>
-            <ContextOfSurvey status={status} surveyContext={surveyData} originalData={originalData}/>
-                        </>
+                !statusCheck ? <SurveySkeleton /> :
+                    getSurveyData.status === "error" ? <span>Error: {getSurveyData.error.message}</span> :
+                <ContextOfSurvey
+                    surveyId={surveyId}
+                    surveyContext={surveyData}
+                    originalData={originalData}
+                    originalUserSurveyData={originalUserSurveyData}
+                    userContext={userData}
+                    userSurveyContext={userSurveyData}
+                    codesContext={codesData}
+                    contactsContext={contactsData}
+                />
             }
         </div>
     </>
@@ -104,336 +183,239 @@ export function useSurveyData() {
     return context
 }
 
-function ContextOfSurvey({status, surveyContext, originalData}) {
+function OriginalSurveyProvider({children, originalSurveyContext}) {
+    const [originalSurveyData, setOriginalSurveyData] = useState(originalSurveyContext)
+    const value = useMemo(() =>(
+        {originalSurveyData, setOriginalSurveyData}
+    ), [originalSurveyData])
+    return <OriginalSurveyContext.Provider value={value}>{children}</OriginalSurveyContext.Provider>
+}
+
+export function useOriginalSurveyData() {
+    const context = useContext(OriginalSurveyContext)
+    if (context === undefined) {
+        throw new Error('useOriginalSurveyData must be used within a OriginalSurveyProvider')
+    }
+    return context
+}
+
+function UserProvider({children, userContext, surveyId}) {
+    const [userData, setUserData] = useState(userContext)
+    const value = useMemo(() =>(
+        {userData, setUserData}
+    ), [userData])
+    return <UserContext.Provider value={value}>{children}</UserContext.Provider>
+}
+
+export function useUserData() {
+    const context = useContext(UserContext)
+    if (context === undefined) {
+        throw new Error('useUserData must be used within a UserProvider')
+    }
+    return context
+}
+
+function UserSurveyProvider({children, userSurveyContext, surveyId}) {
+    const [userSurveyData, setUserSurveyData] = useState(userSurveyContext)
+    const value = useMemo(() =>(
+        {userSurveyData, setUserSurveyData}
+    ), [userSurveyData])
+    useEffect(()=>{
+        localStorage.setItem("userSurveyData-"+surveyId, JSON.stringify(userSurveyData))
+    },[userSurveyData, surveyId])
+    return <UserSurveyContext.Provider value={value}>{children}</UserSurveyContext.Provider>
+}
+
+export function useUserSurveyData() {
+    const context = useContext(UserSurveyContext)
+    if (context === undefined) {
+        throw new Error('useUserSurveyData must be used within a UserSurveyProvider')
+    }
+    return context
+}
+
+function OriginalUserSurveyProvider({children, originalUserSurveyContext}) {
+    const [originalUserSurveyData, setOriginalUserSurveyData] = useState(originalUserSurveyContext)
+    const value = useMemo(() =>(
+        {originalUserSurveyData, setOriginalUserSurveyData}
+    ), [originalUserSurveyData])
+    return <OriginalUserSurveyContext.Provider value={value}>{children}</OriginalUserSurveyContext.Provider>
+}
+
+export function useOriginalUserSurveyData() {
+    const context = useContext(OriginalUserSurveyContext)
+    if (context === undefined) {
+        throw new Error('useOriginalUserSurveyData must be used within a OriginalUserSurveyProvider')
+    }
+    return context
+}
+
+function CodesProvider({children, codesContext}) {
+    const [codesData, setCodesData] = useState(codesContext)
+    const value = useMemo(() =>(
+        {codesData, setCodesData}
+    ), [codesData])
+    return <CodesContext.Provider value={value}>{children}</CodesContext.Provider>
+}
+
+export function useCodesData() {
+    const context = useContext(CodesContext)
+    if (context === undefined) {
+        throw new Error('useCodesData must be used within a CodesProvider')
+    }
+    return context
+}
+
+function ContactsProvider({children, contactsContext}) {
+    const [contactsData, setContactsData] = useState(contactsContext)
+    const value = useMemo(() =>(
+        {contactsData, setContactsData}
+    ), [contactsData])
+    return <ContactsContext.Provider value={value}>{children}</ContactsContext.Provider>
+}
+
+export function useContactsData() {
+    const context = useContext(ContactsContext)
+    if (context === undefined) {
+        throw new Error('useContactsData must be used within a ContactsProvider')
+    }
+    return context
+}
+
+function ContextOfSurvey({surveyId, surveyContext, originalData, userContext, userSurveyContext, codesContext, originalUserSurveyData, contactsContext}) {
     return <SurveyProvider surveyContext={surveyContext}>
-        <SurveyHeader originalData={originalData} />
-        <div className={"survey-view"}>
-            <div className={"survey-content"}>
-                <SurveyNavigation />
-                <SurveyContent status={status}/>
-            </div>
-            <SurveyPreview />
-        </div>
+        <UserProvider userContext={userContext} surveyId={surveyId}>
+            <UserSurveyProvider userSurveyContext={userSurveyContext} surveyId={surveyId}>
+                <CodesProvider codesContext={codesContext}>
+                    <ContactsProvider contactsContext={contactsContext}>
+                        <OriginalSurveyProvider originalSurveyContext={originalData}>
+                            <OriginalUserSurveyProvider originalUserSurveyContext={originalUserSurveyData}>
+                                <SurveyHeader />
+                                <SurveyStatusBanner />
+                                <div className={"survey-view"}>
+                                    <div className={"survey-content"}>
+                                        <SurveyNavigation />
+                                        <SurveyContent/>
+                                    </div>
+                                    <SurveyPreview />
+                                </div>
+                            </OriginalUserSurveyProvider>
+                        </OriginalSurveyProvider>
+                    </ContactsProvider>
+                </CodesProvider>
+            </UserSurveyProvider>
+        </UserProvider>
     </SurveyProvider>
 }
 
-function SurveyHeader({originalData}) {
+function SurveyStatusBanner() {
     const {surveyData} = useSurveyData()
     const intl = useIntl()
-    let surveyName
-    switch (intl.locale) {
-        case "en":
-            surveyName = surveyData.config.name.en
-            break
-        case "fi":
-            surveyName = surveyData.config.name.fi
-            break
-        default:
-            surveyName = surveyData.config.name.en
-    }
-    let name
-    if (surveyData.id === "new" && !surveyName) {
-        name = intl.formatMessage(
-            {
-                id: 'survey.header.newSurvey',
-                defaultMessage: 'New Survey',
-            })
-    } else {
-        name = surveyName
-    }
-    let unsavedChanges = JSON.stringify(surveyData) !== JSON.stringify(originalData)
+    const [status, setStatus] = useState(surveyData.status)
+    const [showBanner, setShowBanner] = useState(true)
+    let statusText
+    let statusShowBanner = status === "IN PROGRESS" || status === "SCHEDULED" || status === "FINISHED"
+    let renderBanner = showBanner && statusShowBanner
+    let statusClass = "survey-status-banner"
 
-    return <div className={"survey-header"}>
-        <Link to="/surveys">
-            <BackArrow />
-        </Link>
-        <h3>{name}</h3>
-        <StatusText survey={surveyData}/>
-        {unsavedChanges &&
-            <p className={"unsaved-changes"}>
-                {intl.formatMessage({
-                    id: 'survey.header.unsavedChanges',
-                    defaultMessage: 'Unsaved changes',
-                })}
-            </p>
-        }
-        <SaveEdits />
-        <PromptDialog unsavedChanges={unsavedChanges}/>
+    if (status === "IN PROGRESS") {
+        statusClass = statusClass.concat(" in-progress")
+        statusText = intl.formatMessage(
+            {
+                id: 'survey.statusBanner.inProgress',
+                defaultMessage: '🚨 The survey is in progress! Editing is limited.',
+            })
+    }
+    if (status === "SCHEDULED") {
+        statusClass = statusClass.concat(" scheduled")
+        statusText = intl.formatMessage(
+            {
+                id: 'survey.statusBanner.scheduled',
+                defaultMessage: '⏱ This survey is scheduled to start. If you wish to make changes switch the survey to Edit-mode, and republish after you are done.',
+            })
+    }
+    if (status === "FINISHED") {
+        statusClass = statusClass.concat(" finished")
+        statusText = intl.formatMessage(
+            {
+                id: 'survey.statusBanner.finished',
+                defaultMessage: '🎉 This survey is finished. If you wish to edit it consider creating a new survey by duplicating this one.',
+            })
+    }
+
+    return renderBanner &&
+        <div className={statusClass}>
+            {status === "SCHEDULED" ?
+                <>
+                <div className={"count-container"}>
+                    <CountDownTimer />
+                    <div className={"close-toggle-container"}>
+                        <div className={"close-toggle"} onClick={()=>setShowBanner(false)}>
+                            <CloseIcon />
+                        </div>
+                    </div>
+                </div>
+                    {statusText}
+                </> :
+                <>
+                    {statusText}
+                    <div className={"close-toggle-container"}>
+                        <div className={"close-toggle"} onClick={()=>setShowBanner(false)}>
+                            <CloseIcon />
+                        </div>
+                    </div>
+                </>
+            }
     </div>
 }
 
-function PromptDialog({unsavedChanges}) {
-    const {surveyData, setSurveyData} = useSurveyData()
-    const [showSavePrompt, setShowSavePrompt] = useState(false)
-    const [nextLocationPathname, setNextLocationPathname] = useState(null)
-    const [confirmNavigation, setConfirmNavigation] = useState(false)
+function CountDownTimer() {
+    const {surveyData} = useSurveyData()
     const intl = useIntl()
-    let history = useHistory()
-    let { surveyId } = useParams()
 
-    const checkForNextLocation = (nextLocation) => {
-        setNextLocationPathname(nextLocation.pathname)
-        if (confirmNavigation) {
-            return true
-        }
-        if (nextLocation.pathname === "/surveys" || nextLocation.pathname === "/contacts" || nextLocation.pathname === "/users") {
-            setShowSavePrompt(true)
-            return false
-        }
-        return true
-    }
-
-    const cancelPrompt = () => {
-        setShowSavePrompt(false)
-    }
-
-    const navigateToLink = () => {
-        setConfirmNavigation(true)
-    }
-
-    useEffect(()=>{
-        if (confirmNavigation) {
-            history.push(nextLocationPathname)
-            localStorage.removeItem("stored-"+surveyData.id)
-        }
-    },[confirmNavigation])
-
-    // Send update to API
-    const surveyUpdate = UpdateSurveyWithId(surveyData.id)
-    const [newSurveyUpdateToAPI, setNewSurveyUpdateToAPI] = useState(null)
-    useEffect(() => {
-        if (newSurveyUpdateToAPI) {
-            surveyUpdate.mutateAsync(surveyData).then( () => {
-                setConfirmNavigation(true)
-            })
-        }
-    }, [newSurveyUpdateToAPI])
-
-    // Post new survey to API
-    const newID = JSON.stringify(new Date().getTime())
-    const surveyPost = PostSurveyWithId(newID)
-    const [newSurveyToAPI, setNewSurveyToAPI] = useState(null)
-    useEffect(() => {
-        if (newSurveyToAPI) {
-            surveyPost.mutateAsync(surveyData).then( () => {
-                setConfirmNavigation(true)
-            })
-        }
-    }, [newSurveyToAPI])
-
-    const saveChanges = () => {
-        const newSurveyData = {...surveyData}
-        if (surveyId === "new") {
-            newSurveyData.id = newID
-            newSurveyData.updated = updateTimeToServerFormat(new Date())
-            newSurveyData.updatedby = "Annie Survey Manager"
-            newSurveyData.status = "DRAFT"
-            setSurveyData(newSurveyData)
-            setNewSurveyToAPI(newSurveyData)
+    const calculateTimeLeft = () => {
+        let countTo = new Date(surveyData.starttime).getTime()
+        let countFrom = new Date().getTime()
+        let countRemainder = countTo - countFrom
+        let timeLeft = {}
+        if (countRemainder > 0) {
+            timeLeft = {
+                days : Math.floor(countRemainder / (1000 * 60 * 60 * 24)),
+                hours : Math.floor((countRemainder % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+                minutes : Math.floor((countRemainder % (1000 * 60 * 60)) / (1000 * 60)),
+                seconds : Math.floor((countRemainder % (1000 * 60)) / 1000)
+            }
         } else {
-            newSurveyData.updated = updateTimeToServerFormat(new Date())
-            newSurveyData.updatedby = "Annie Survey Manager"
-            setNewSurveyUpdateToAPI(newSurveyData)
+            timeLeft = null
         }
+        return timeLeft
     }
-    return <>
-        <Prompt
-        when={unsavedChanges}
-        message={checkForNextLocation}
-    />
-    {showSavePrompt &&
-    <Modal header={intl.formatMessage({
-        id: 'survey.unsavedChanges.header',
-        defaultMessage: 'Save changes to survey?',
-    })}
-           text={<FormattedMessage
-               id={"survey.unsavedChanges.text"}
-               defaultMessage={"Do you wish to save changes before leaving page?{br}Any unsaved changes will be lost."}
-               values={{br: <br/>}}/>
-           }
-           discardText={intl.formatMessage({
-               id: 'survey.unsavedChanges.discard',
-               defaultMessage: "Don't save",
-           })}
-           confirmText={intl.formatMessage({
-               id: 'survey.unsavedChanges.confirm',
-               defaultMessage: 'Save changes',
-           })}
-           discardAction={navigateToLink}
-           closeModal={cancelPrompt}
-           confirmAction={saveChanges}
-    />
-    }
-    </>
-}
 
-function SaveEdits() {
-    const intl = useIntl()
-    const {surveyData, setSurveyData} = useSurveyData()
-    const surveyUpdate = UpdateSurveyWithId(surveyData.id)
-    const newID = JSON.stringify(new Date().getTime())
-    const surveyPost = PostSurveyWithId(newID)
-    let createNewSurvey
-    let { surveyId } = useParams()
-    if (surveyId === "new") {
-       createNewSurvey = true
-    }
-    let surveyIsDraft = surveyData.status === "DRAFT"
+    const [timeLeft, setTimeLeft] = useState(calculateTimeLeft())
 
-    // Send update to API
-    const [newSurveyUpdateToAPI, setNewSurveyUpdateToAPI] = useState(null)
-    useEffect(() => {
-        if (newSurveyUpdateToAPI) {
-            surveyUpdate.mutateAsync(surveyData).then( () => {
-                history.push("/surveys/")
-                localStorage.removeItem("stored-"+surveyData.id)
-            })
-        }
-    }, [newSurveyUpdateToAPI])
+    useEffect(()=> {
+        const timer = setTimeout(()=>{
+            setTimeLeft(calculateTimeLeft())
+        }, 1000)
+        return () => clearTimeout(timer)
+    })
 
-    // Post new survey to API
-    const [newSurveyToAPI, setNewSurveyToAPI] = useState(null)
-    let history = useHistory()
-    useEffect(() => {
-        if (newSurveyToAPI) {
-            surveyPost.mutateAsync(surveyData).then( () => {
-                history.push("/surveys/")
-                localStorage.removeItem("stored-"+surveyData.id)
-            })
-        }
-    }, [newSurveyToAPI])
-
-    //TODO: Refactor button functions and that statuses are properly set
-
-    return <div className={"save-toolbar"}>
-        <button className={"cancel"} onClick={()=>{
-            history.push("/surveys/")
-            localStorage.removeItem("stored-"+surveyData.id)}
-        }>
-            {intl.formatMessage(
+    return <div className={"count-down-timer"}>
+        ⏱ {timeLeft ?
+            <>{timeLeft.days}d {timeLeft.hours}h {timeLeft.minutes}m {timeLeft.seconds}s</> :
+            intl.formatMessage(
                 {
-                    id: 'survey.save.cancel',
-                    defaultMessage: 'Cancel',
-                })}
-        </button>
-        {createNewSurvey ?
-            <button className={"draft"} onClick={() => {
-                const newSurveyData = {...surveyData}
-                newSurveyData.id = newID
-                newSurveyData.updated = updateTimeToServerFormat(new Date())
-                newSurveyData.updatedby = "Annie Survey Manager"
-                newSurveyData.status = "DRAFT"
-                setSurveyData(newSurveyData)
-                setNewSurveyToAPI(newSurveyData)
-            }}>
-                {intl.formatMessage(
-                    {
-                        id: 'survey.save.finishLater',
-                        defaultMessage: 'Finish Later',
-                    })}
-            </button>
-            :
-            <button className={"draft"} onClick={() => {
-                const newSurveyData = {...surveyData}
-                newSurveyData.updated = updateTimeToServerFormat(new Date())
-                newSurveyData.updatedby = "Annie Survey Manager"
-                newSurveyData.status = "DRAFT"
-                setSurveyData(newSurveyData)
-                setNewSurveyUpdateToAPI(newSurveyData)
-            }}>
-                {surveyIsDraft ?
-                    intl.formatMessage(
-                        {
-                            id: 'survey.save.finishLater',
-                            defaultMessage: 'Finish Later',
-                        }) :
-                    intl.formatMessage(
-                        {
-                            id: 'survey.save.draft',
-                            defaultMessage: 'Change to draft',
-                        })
-                }
-            </button>
+                    id: 'survey.startingSurvey',
+                    defaultMessage: 'Starting Survey...',
+                })
         }
-
-        {surveyUpdate.isLoading ? (
-            <button disabled className={"save"}>
-                <LoaderIcon/>
-            </button>
-        ) : (
-            <>
-                {surveyUpdate.isError &&
-                <button className={"save"} onClick={() => {surveyUpdate.mutate(surveyData)}}>
-                    Try again
-                </button>
-                }
-                {surveyUpdate.isSuccess &&
-                <button className={"save"} onClick={() => {surveyUpdate.mutate(surveyData)}}>
-                    Saved ✓
-                </button>
-                }
-                {surveyPost.isSuccess &&
-                <button className={"save"} onClick={() => {surveyPost.mutate(surveyData)}}>
-                    Published ✓
-                </button>
-                }
-                {!surveyUpdate.isSuccess && !surveyUpdate.isError && !createNewSurvey && !surveyIsDraft &&
-                <button className={"save"} onClick={() => {
-                    const newSurveyData = {...surveyData}
-                    newSurveyData.updated = updateTimeToServerFormat(new Date())
-                    newSurveyData.updatedby = "Annie Survey Manager"
-                    setSurveyData(newSurveyData)
-                    setNewSurveyUpdateToAPI(newSurveyData)
-                }}>
-                    {intl.formatMessage(
-                        {
-                            id: 'survey.save.update',
-                            defaultMessage: 'Update',
-                        })}
-                </button>
-                }
-                {!surveyPost.isSuccess && !surveyPost.isError && createNewSurvey &&
-                <button className={"save"} onClick={() => {
-                    const newSurveyData = {...surveyData}
-                    newSurveyData.id = newID
-                    newSurveyData.updated = updateTimeToServerFormat(new Date())
-                    newSurveyData.updatedby = "Annie Survey Manager"
-                    newSurveyData.status = null
-                    setSurveyData(newSurveyData)
-                    setNewSurveyToAPI(newSurveyData)
-                }}>
-                    {intl.formatMessage(
-                        {
-                            id: 'survey.save.publish',
-                            defaultMessage: 'Publish',
-                        })}
-                </button>
-                }
-                {surveyIsDraft && !createNewSurvey &&
-                <button className={"save"} onClick={() => {
-                    const newSurveyData = {...surveyData}
-                    newSurveyData.updated = updateTimeToServerFormat(new Date())
-                    newSurveyData.updatedby = "Annie Survey Manager"
-                    newSurveyData.status = null
-                    setSurveyData(newSurveyData)
-                    setNewSurveyUpdateToAPI(newSurveyData)
-                }}>
-                    {intl.formatMessage(
-                        {
-                            id: 'survey.save.publish',
-                            defaultMessage: 'Publish',
-                        })}
-                </button>
-                }
-            </>
-        )}
     </div>
 }
 
 function SurveyPreview() {
     const {surveyData} = useSurveyData()
     const intl = useIntl()
-    const [previewOpen, setPreviewOpen] = useState(true)
+    const [previewOpen, setPreviewOpen] = useState( localStorage.getItem("previewOpen") ? JSON.parse(localStorage.getItem("previewOpen")) : true)
     return <div className={previewOpen ? "survey-preview" : "survey-preview closed"}>
         <div className={"preview-header"}>
             {previewOpen &&
@@ -446,10 +428,16 @@ function SurveyPreview() {
             </h3>
             }
             {previewOpen ?
-                <button onClick={() => setPreviewOpen(!previewOpen)}>
+                <button onClick={() => {
+                    localStorage.setItem("previewOpen", JSON.stringify(!previewOpen))
+                    setPreviewOpen(!previewOpen)
+                }}>
                     <MinimizeIcon/>
                 </button> :
-                <button onClick={() => setPreviewOpen(!previewOpen)}>
+                <button onClick={() => {
+                    localStorage.setItem("previewOpen", JSON.stringify(!previewOpen))
+                    setPreviewOpen(!previewOpen)
+                }}>
                     <PathsIcon/>
                 </button>
             }
@@ -473,7 +461,7 @@ function SurveyPreview() {
 
 function GetPreviewChildren(props) {
     return <>
-        {Object.keys(props.data).filter(key => key.startsWith('branch') || key === 'other')
+        {Object.keys(props.data).filter(key => key.startsWith('branch') || key === 'other').sort()
             .map( (keyValue, i) => {
                 return <PreviewChild data={props.data} parentColor={props.parentColor} keyValue={keyValue} i={i} key={i} depth={props.depth} parent={props.parent} parentsParent={props.parentsParent} parentsParentsParent={props.parentsParentsParent}/>
             })}
@@ -488,6 +476,10 @@ function PreviewChild(props) {
     return <div className={isBranch ? "message-container has-steps" : "message-container"} key={props.i}>
         <div className={"message"}>
             <div className={"message-icon"} title={props.data[props.keyValue].message} style={{backgroundColor:color}}>{icon}</div>
+            {props.data[props.keyValue].hasOwnProperty("supportneed") &&
+            props.data[props.keyValue]["supportneed"] &&
+            <SupportIcon/>
+            }
         </div>
             {
                 isBranch &&
@@ -535,11 +527,11 @@ function SurveyNavigation() {
                     </NavLink>
                 </li>
                 <li>
-                    <NavLink to={`${url}/support-categories`}>
+                    <NavLink to={`${url}/support-needs`}>
                         {intl.formatMessage(
                             {
-                                id: 'survey.navigation.supportCategories',
-                                defaultMessage: 'Support Categories',
+                                id: 'survey.navigation.supportNeeds',
+                                defaultMessage: 'Support Needs',
                             })}
                     </NavLink>
                 </li>
@@ -557,13 +549,8 @@ function SurveyNavigation() {
     </div>
 }
 
-function SurveyContent({status}) {
+function SurveyContent() {
     let { url, path } = useRouteMatch()
-    if (status === "loading") {
-        return <div className={"survey-edit"}>
-            <Skeleton height={30} /><Skeleton height={30} width={200} />
-            </div>
-    }
     return <div className={"survey-edit"}>
         <Switch>
             <Route path={`${path}/information`}>
@@ -575,8 +562,8 @@ function SurveyContent({status}) {
             <Route path={`${path}/reminders`}>
                 <SurveyReminders />
             </Route>
-            <Route path={`${path}/support-categories`}>
-                <SupportCategories />
+            <Route path={`${path}/support-needs`}>
+                <SurveySupportNeeds />
             </Route>
             <Route path={`${path}/recipients`}>
                 <SurveyRecipients />
@@ -633,9 +620,15 @@ function SurveyInformation() {
             timeCaption = "Time"
             locale = ""
     }
-    // TODO: fix date gets forgotten from context when switching languages
 
     return <>
+        <h4>
+            {intl.formatMessage(
+                {
+                    id: 'survey.navigation.information',
+                    defaultMessage: 'Information',
+                })}
+        </h4>
         <label htmlFor={"survey-name"}>
             {intl.formatMessage(
                 {
@@ -727,6 +720,22 @@ function SurveyReminders() {
 
     return <>
         <div className={"reminders"}>
+            <h4>
+                {intl.formatMessage(
+                    {
+                        id: 'survey.navigation.reminders',
+                        defaultMessage: 'Reminders',
+                    })}
+            </h4>
+            {reminders.length < 1 &&
+            <p className={"placeholder"}>
+                {intl.formatMessage(
+                    {
+                        id: 'survey.reminderMissing.placeholder',
+                        defaultMessage: 'Your survey doesn\'t have any reminders. Start adding by clicking the button below.',
+                    })}
+            </p>
+            }
             {reminders.map((reminder, i) => {
                 return <div className={"message reminder"} key={i}>
                     <div className={"message-icon"}>
@@ -741,7 +750,7 @@ function SurveyReminders() {
                     </div>
                 </div>
             })}
-            <button className={"add-new-reminder"} onClick={addReminder}>
+            <button className={"add-new-reminder add-new-button"} onClick={addReminder}>
                 {intl.formatMessage(
                     {
                         id: 'survey.reminders.addReminder',
@@ -845,28 +854,71 @@ function EditableContent(props) {
         })} />
 }
 
-function SupportCategories() {
-    const intl = useIntl()
-    return <>
-        <h1>
-            {intl.formatMessage(
-                {
-                    id: 'survey.navigation.supportCategories',
-                    defaultMessage: 'Support Categories',
-                })}
-        </h1>
-    </>
-}
-
-function SurveyRecipients() {
-    const intl = useIntl()
-    return <>
-        <h1>
-            {intl.formatMessage(
-                {
-                    id: 'survey.navigation.recipients',
-                    defaultMessage: 'Recipients',
-                })}
-        </h1>
-    </>
+function SurveySkeleton() {
+    return <div className={"survey-container skeleton-container"}>
+        <div className={"survey-header"}>
+            <Skeleton width={17} height={17} circle={true} noMargin={true} classText={"back"}/>
+            <Skeleton width={250} height={24} noMargin={true}/>
+            <Skeleton width={57} height={17} noMargin={true} classText={"status"}/>
+            <div className={"save-toolbar"}>
+                <Skeleton width={40} height={17} noMargin={true} classText={"cancel"}/>
+                <Skeleton width={150} height={40} noMargin={true} classText={"draft"}/>
+                <Skeleton width={90} height={40} noMargin={true} classText={"save"}/>
+            </div>
+        </div>
+        <div className={"survey-view"}>
+            <div className={"survey-content"}>
+                <div className={"survey-navigation"}>
+                    <Skeleton width={80} height={20} noMargin={true}/>
+                    <Skeleton width={80} height={20} noMargin={true}/>
+                    <Skeleton width={80} height={20} noMargin={true}/>
+                    <Skeleton width={80} height={20} noMargin={true}/>
+                    <Skeleton width={80} height={20} noMargin={true}/>
+                </div>
+                <div className={"survey-edit"}>
+                    <Skeleton width={40} height={20}/>
+                    <Skeleton height={55} noMargin={true} classText={"input"}/>
+                    <div className={"survey-time"}>
+                        <div>
+                            <Skeleton width={40} height={20}/>
+                            <Skeleton height={55} noMargin={true} classText={"input"}/>
+                        </div>
+                        <div>
+                            <Skeleton width={40} height={20}/>
+                            <Skeleton height={55} noMargin={true} classText={"input"}/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div className={"survey-preview"}>
+                <div className={"preview-header"}>
+                    <Skeleton width={70} height={20} noMargin={true}/>
+                </div>
+                <div className={"messages"}>
+                    <div className={"message-container has-steps"}>
+                        <Skeleton width={40} height={40} noMargin={true} classText={"message"}/>
+                        <div className={"message-children"}>
+                            <div className={"message-container has-steps"}>
+                                <Skeleton width={40} height={40} noMargin={true} classText={"message"}/>
+                                <div className={"message-children"}>
+                                    <div className={"message-container has-steps"}>
+                                        <Skeleton width={40} height={40} noMargin={true} classText={"message"}/>
+                                    </div>
+                                    <div className={"message-container has-steps"}>
+                                        <Skeleton width={40} height={40} noMargin={true} classText={"message"}/>
+                                    </div>
+                                    <div className={"message-container"}>
+                                        <Skeleton width={40} height={40} noMargin={true} classText={"message"}/>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className={"message-container"}>
+                                <Skeleton width={40} height={40} noMargin={true} classText={"message"}/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 }

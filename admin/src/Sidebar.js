@@ -7,6 +7,7 @@ import { ReactComponent as SurveysIcon } from "./svg/surveys.svg"
 import { ReactComponent as ContactsIcon } from "./svg/contacts.svg"
 import { ReactComponent as UsersIcon } from "./svg/users.svg"
 import { ReactComponent as ToggleSidebar } from "./svg/toggle.svg"
+import {ReactComponent as Logo} from "./svg/logo.svg";
 
 export default function Sidebar() {
     const [isSidebarOpen, toggleSidebarOpen] = useState(true)
@@ -31,7 +32,7 @@ export default function Sidebar() {
                         </NavLink>
                     </li>
                     <li>
-                        <NavLink to={"/users"}>
+                        <NavLink to={"/support-providers"}>
                             <UsersIcon />
                         </NavLink>
                     </li>
@@ -41,7 +42,9 @@ export default function Sidebar() {
     }
     return <div className={"sidebar"}>
         <h1>
-            <div className={"logo"}>Annie Advisor</div>
+            <div className={"logo"}>
+                <Logo />
+            </div>
             <div className={"toggle-sidebar"} onClick={() => toggleSidebarOpen(!isSidebarOpen)}>
                 <ToggleSidebar />
             </div>
@@ -69,12 +72,12 @@ export default function Sidebar() {
                     </NavLink>
                 </li>
                 <li>
-                    <NavLink to={"/users"}>
+                    <NavLink to={"/support-providers"}>
                         <UsersIcon />
                         {intl.formatMessage(
                         {
-                            id: 'main.sidebar.users',
-                            defaultMessage: 'Users',
+                            id: 'main.sidebar.supportProviders',
+                            defaultMessage: 'Support Providers',
                         })}
                     </NavLink>
                 </li>

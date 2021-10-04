@@ -5,27 +5,7 @@
   flex-direction: column;
   flex-grow: 1;
   background-color: $background-color;
-}
-
-.survey-header {
-  display: flex;
-  padding: 1.5rem 2rem;
-  align-items: center;
-  background-color: $white;
-  border-radius: $border-radius;
-  margin: 2rem 2rem 0 2rem;
-}
-
-.survey-header > a {
-  margin-right: 2rem;
-}
-
-.survey-header a svg {
-  vertical-align: middle;
-}
-
-.survey-header p.status {
-  margin-left: 2rem;
+  overflow-x: hidden;
 }
 
 .survey-view {
@@ -107,10 +87,6 @@
   margin: 2rem;
   display: flex;
   flex-direction: column;
-}
-
-.survey-preview.closed {
-  flex-shrink: unset;
 }
 
 .survey-preview h3 {
@@ -233,48 +209,7 @@
   background-color: $grey;
 }
 
-.save-toolbar {
-  display: flex;
-  margin-left: auto;
-}
-
-.unsaved-changes {
-  margin: 0 auto 0 2rem;
-  color: $grey-text;
-}
-
-.save-toolbar button {
-  margin-left: 1.5rem;
-  text-align: center;
-  border-radius: $admin-radius;
-  padding: 1rem 1.5rem;
-  font-weight: 600;
-  font-size: 1.4rem;
-  min-width: 8rem;
-  height: 4rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.save-toolbar button.save {
-  color: $white;
-  background-color: $main-color;
-}
-
-.save-toolbar button.cancel {
-  background-color: transparent;
-  color: $grey-text;
-  font-weight: 400;
-  padding: 0;
-  min-width: unset;
-}
-
-.save-toolbar button.cancel:hover {
-  color: $black;
-}
-
-.add-new-reminder {
+.add-new-reminder, .add-new-button {
   background-color: $white;
   border-radius: $border-radius;
   border: 1px solid $border-color;
@@ -300,4 +235,134 @@
   margin-left: 1rem;
   width: 7rem;
   margin-right: .5rem
+}
+
+.block-container {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.block-container .block {
+  margin: 0 1rem 1rem 0;
+}
+
+.block {
+  cursor: pointer;
+  color: $blue-text;
+  font-weight: 500;
+  background-color: $background-blue;
+  margin-right: 1rem;
+  transition: .1s all;
+  border-radius: $border-radius;
+  display: inline-block;
+  padding: 1rem 1.5rem;
+}
+
+.block:hover {
+  background-color: $light-blue;
+}
+
+.block.not-assigned {
+  border: $border;
+  background-color: transparent;
+  color: $grey-text;
+}
+
+.block.outlined {
+  border: $border;
+  background-color: transparent;
+  color: $black;
+}
+
+.block.not-assigned:hover, .block.outlined:hover {
+  border-color: $darker-grey;
+  color: $black;
+  background-color: $light-grey;
+}
+
+.block.selected {
+  border: 1px solid $blue;
+}
+
+.survey-preview .message > svg {
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+.skeleton-container .save-toolbar {
+  align-items: center;
+}
+
+.skeleton-container .save-toolbar .save, .skeleton-container .save-toolbar .draft, .skeleton-container .save-toolbar .cancel {
+  margin-left: 1.5rem;
+}
+
+.skeleton-container .survey-navigation {
+  display: flex;
+  align-items: center;
+  padding: 2rem;
+}
+
+.skeleton-container .survey-navigation .skeleton {
+  margin: 0 2rem
+}
+
+.skeleton-container .skeleton.message {
+  margin-bottom: 2rem;
+  display: flex;
+  position: relative;
+}
+
+.survey-status-banner {
+  color: $blue-text;
+  background-color: $light-blue;
+  font-weight: 500;
+  padding: 1.5rem 2rem;
+  margin: 2rem 2rem 0 2rem;
+  border-radius: $border-radius;
+  display: flex;
+}
+
+.survey-status-banner.scheduled, .survey-status-banner.in-progress, .survey-status-banner.finished {
+  color: white;
+  font-weight: 600;
+}
+.survey-status-banner.scheduled {
+  background-color: $orange;
+  display: block;
+}
+
+.survey-status-banner.in-progress {
+  background-color: $green;
+}
+
+.survey-status-banner.finished {
+  background-color: $blue;
+}
+
+.survey-status-banner.in-progress .close-toggle-container svg *, .survey-status-banner.scheduled .close-toggle-container svg *, .survey-status-banner.finished .close-toggle-container svg * {
+  stroke: white;
+}
+
+.survey-status-banner .close-toggle-container {
+  margin-left: auto;
+}
+
+.survey-status-banner .close-toggle-container .close-toggle {
+  cursor: pointer;
+}
+
+.survey-status-banner .close-toggle-container svg * {
+  stroke: $blue-text;
+}
+
+.count-container {
+  width: 100%;
+  display: flex;
+  margin-bottom: 1rem;
+}
+
+.count-down-timer {
+  white-space: nowrap;
+  margin-right: 1rem;
 }

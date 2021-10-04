@@ -1,0 +1,222 @@
+[
+  {
+    "id": 10,
+    "updated": "2021-03-29 12:46:55.315+03",
+    "updatedby": "Joonas Pesonen (joonas.pesonen@annieadvisor.com)",
+    "contact": "COSXw4cnEOCM",
+    "category": "A3",
+    "status": "100",
+    "survey": "QA2",
+    "userrole": ""
+  },
+  {
+    "id": 11,
+    "updated": "2021-03-30 10:09:59.282+03",
+    "updatedby": "Joonas Pesonen (joonas.pesonen@annieadvisor.com)",
+    "contact": "COSXw4cnEOCM",
+    "category": "A24",
+    "status": "100",
+    "survey": "QA4",
+    "userrole": ""
+  },
+  {
+    "id": 12,
+    "updated": "2021-03-30 10:10:04.054+03",
+    "updatedby": "Joonas Pesonen (joonas.pesonen@annieadvisor.com)",
+    "contact": "COMZbNDUX0nR",
+    "category": "C3",
+    "status": "100",
+    "survey": "Y",
+    "userrole": ""
+  },
+  {
+    "id": 20,
+    "updated": "2021-04-06 08:40:38.202+03",
+    "updatedby": "Joonas Pesonen (joonas.pesonen@annieadvisor.com)",
+    "contact": "COSXw4cnEOCM",
+    "category": "C3",
+    "status": "100",
+    "survey": "QA8",
+    "userrole": ""
+  },
+  {
+    "id": 21,
+    "updated": "2021-04-06 08:40:50.032+03",
+    "updatedby": "Joonas Pesonen (joonas.pesonen@annieadvisor.com)",
+    "contact": "COSXw4cnEOCM",
+    "category": "B5",
+    "status": "100",
+    "survey": "QA6",
+    "userrole": ""
+  },
+  {
+    "id": 22,
+    "updated": "2021-04-06 08:40:56.281+03",
+    "updatedby": "Joonas Pesonen (joonas.pesonen@annieadvisor.com)",
+    "contact": "COSXw4cnEOCM",
+    "category": "A",
+    "status": "100",
+    "survey": "QA7",
+    "userrole": null
+  },
+  {
+    "id": 33,
+    "updated": "2021-04-11 08:01:49.32+03",
+    "updatedby": "Joonas Pesonen (joonas.pesonen@annieadvisor.com)",
+    "contact": "COSXw4cnEOCM",
+    "category": "EMAIL",
+    "status": "100",
+    "survey": "SPE4",
+    "userrole": ""
+  },
+  {
+    "id": 34,
+    "updated": "2021-04-11 08:01:56.958+03",
+    "updatedby": "Joonas Pesonen (joonas.pesonen@annieadvisor.com)",
+    "contact": "COSXw4cnEOCM",
+    "category": "EMAIL",
+    "status": "100",
+    "survey": "SPE3",
+    "userrole": ""
+  },
+  {
+    "id": 36,
+    "updated": "2021-04-11 08:02:11.587+03",
+    "updatedby": "Joonas Pesonen (joonas.pesonen@annieadvisor.com)",
+    "contact": "COSXw4cnEOCM",
+    "category": "Z",
+    "status": "100",
+    "survey": "SPE2",
+    "userrole": ""
+  },
+  {
+    "id": 37,
+    "updated": "2021-04-11 08:02:20.399+03",
+    "updatedby": "Joonas Pesonen (joonas.pesonen@annieadvisor.com)",
+    "contact": "COSXw4cnEOCM",
+    "category": "C4",
+    "status": "100",
+    "survey": "QA9",
+    "userrole": ""
+  },
+  {
+    "id": 39,
+    "updated": "2021-04-27 12:44:28.885+03",
+    "updatedby": "Miska Noponen (miska.noponen@annieadvisor.com)",
+    "contact": "COSXw4cnEOCM",
+    "category": "W",
+    "status": "2",
+    "survey": "SPE5",
+    "userrole": null
+  },
+  {
+    "id": 40,
+    "updated": "2021-05-06 18:15:01.865036+03",
+    "updatedby": "Annie",
+    "contact": "COSXw4cnEOCM",
+    "category": "X",
+    "status": "1",
+    "survey": "REM1",
+    "userrole": null
+  },
+  {
+    "id": 41,
+    "updated": "2021-05-07 13:57:22.919+03",
+    "updatedby": "Annie",
+    "contact": "COSXw4cnEOCM",
+    "category": "Z",
+    "status": "1",
+    "survey": "REM2",
+    "userrole": ""
+  },
+  {
+    "id": 42,
+    "updated": "2021-05-07 14:35:01.27645+03",
+    "updatedby": "Annie",
+    "contact": "COSXw4cnEOCM",
+    "category": "X",
+    "status": "1",
+    "survey": "REM2",
+    "userrole": null
+  },
+  {
+    "id": 43,
+    "updated": "2021-05-20 09:48:54.679+03",
+    "updatedby": "Annie",
+    "contact": "COMZbNDUX0nR",
+    "category": "A33",
+    "status": "1",
+    "survey": "L3",
+    "userrole": ""
+  },
+  {
+    "id": 50,
+    "updated": "2021-05-21 21:35:24.607+03",
+    "updatedby": "Lauri Jokipii (lauri.jokipii@annieadvisor.com)",
+    "contact": "COSXw4cnEOCM",
+    "category": "A",
+    "status": "1",
+    "survey": "L3",
+    "userrole": ""
+  },
+  {
+    "id": 51,
+    "updated": "2021-05-28 10:20:44.034+03",
+    "updatedby": "Annie",
+    "contact": "COSXw4cnEOCM",
+    "category": "A2",
+    "status": "1",
+    "survey": "1622185453721",
+    "userrole": ""
+  },
+  {
+    "id": 52,
+    "updated": "2021-05-28 10:50:20.882+03",
+    "updatedby": "Annie",
+    "contact": "COSXw4cnEOCM",
+    "category": "A2",
+    "status": "1",
+    "survey": "QA285",
+    "userrole": ""
+  },
+  {
+    "id": 53,
+    "updated": "2021-05-28 11:00:25.206+03",
+    "updatedby": "Annie",
+    "contact": "COSXw4cnEOCM",
+    "category": "A2",
+    "status": "1",
+    "survey": "QA2852",
+    "userrole": ""
+  },
+  {
+    "id": 54,
+    "updated": "2021-05-28 11:15:21.874+03",
+    "updatedby": "Annie",
+    "contact": "COSXw4cnEOCM",
+    "category": "A2",
+    "status": "1",
+    "survey": "QA2853",
+    "userrole": ""
+  },
+  {
+    "id": 55,
+    "updated": "2021-06-17 11:58:39.229+03",
+    "updatedby": "Annie",
+    "contact": "CO5y31H6MbQ6",
+    "category": "B",
+    "status": "1",
+    "survey": "1",
+    "userrole": ""
+  },
+  {
+    "id": 56,
+    "updated": "2021-06-17 12:48:09.137+03",
+    "updatedby": "Annie",
+    "contact": "COFLQgwoomkF",
+    "category": "A",
+    "status": "1",
+    "survey": "1",
+    "userrole": ""
+  }
+]
