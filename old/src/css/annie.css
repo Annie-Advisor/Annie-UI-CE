@@ -1,7 +1,8 @@
 body {
-  background-color: #FFF4F3;
-  color: #000000;
-  font-family: 'Poppins';
+  background-color: #FFFFFF;
+  color: #1F2659;
+  font-family: "Poppins",-apple-system,BlinkMacSystemFont,"Segoe UI","Roboto","Oxygen","Ubuntu","Cantarell","Fira Sans","Droid Sans","Helvetica Neue",sans-serif;
+  -webkit-font-smoothing: antialiased;
   font-weight: 200; /* 'Extra-Light'; */
 }
 
@@ -18,8 +19,29 @@ h4 {
   font-weight: bold;
 }
 a {
-  color: #FC897B;
+  color: #ED5B3A;
   text-decoration: none;
+}
+
+a:hover {
+  color: #F79151;
+  text-decoration: none;
+}
+
+.progress-bar-success {
+    background-color: #027d65;
+}
+
+.btn-success {
+    color: #fff;
+    background-color: #027d65;
+    border-color: #027d65;
+}
+
+.btn-primary {
+    color: #fff;
+    background-color: #027d65;
+    border-color: #027d65;
 }
 
 .color0 {
@@ -35,28 +57,32 @@ a {
   background-color: #FFFFFF;
 }
 .color2 {
-  color: #FFF4F3;
+  color: #F0F0F7;
 }
 .bgcolor2 {
-  background-color: #FFF4F3;
+  background-color: #F0F0F7;
 }
 .color3 {
-  color: #FC897B;
+  color: #ED5B3A;
 }
 .bgcolor3 {
-  background-color: #FC897B;
+  background-color: #ED5B3A;
 }
 .color4 {
-  color: #71D6C0;
+  color: #027d65;
 }
 .bgcolor4 {
-  background-color: #71D6C0;
+  background-color: #027d65;
 }
 .color5 {
-  color: #FFDE8D;
+  color: #F1CC72;
 }
 .bgcolor5 {
-  background-color: #FFDE8D;
+  background-color: #F1CC72;
+}
+
+th {
+  font-weight: 600;
 }
 
 .slider {
@@ -76,13 +102,13 @@ a {
   width: 25px;
   height: 25px;
   border-radius: 50%;
-  background: #FC897B;
+  background: #027d65;
   cursor: pointer;
 }
 .slider::-moz-range-thumb {
   width: 25px;
   height: 25px;
   border-radius: 50%;
-  background: #FC897B;
+  background: #027d65;
   cursor: pointer;
 }

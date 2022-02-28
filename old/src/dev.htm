@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<!-- bootstrap :: the  first 3 must be first -->
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Annie">
+<meta name="keywords" content="annie, dropout stop, education, learning, support">
+<meta name="author" content="Annie Advisor">
+<script>
+let auth = {
+    logouturl: ".",
+    firstname: "Me",
+    lastname: "Myself",
+    uid: "and-I",
+    cid: "123456789abcdef0123456789abcdef0@annie_dev",
+    cide: "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789@annie_dev",
+    school: "Annie School of Advisor",
+    schoolCode: "00000",
+    municipality: "Helsinki",
+    municipalityCode: "091",
+    class: "6B",
+    classLevel: "6",
+    role: "Helsinki;000000;6B;Developer"
+};
+</script>
+
+<script>
+let INSTANCE_CONFIG={
+  "schoolName":"Advisor School",
+
+  "updateInterval":5,
+  "itemsPerPage":50,
+  "studentTableOrder":["status","-updated","contactdata.lastname","contactdata.firstname"],
+
+  "smsSendEnabled": true,
+
+  "timeout":3,
+
+  "language":"fi",
+  "languages":{"en":"In English","fi":"Suomeksi","sv":"På svenska"},
+
+  "title":"Annie..",
+  
+  "columns":{
+    "contact":{
+      "phonenumber":{"i":12,"a":"phonenumber","t":"text","on":false,"fi":"Puhelinnumero","en":"Phone number"},
+      "studentid":{"i":10,"a":"studentid","t":"text","on":false,"fi":"Opiskelija ID","en":"Student ID"},
+      "studentnumber":{"i":11,"a":"studentnumber","t":"text","on":false,"fi":"Opiskelijanumero","en":"Student number"},
+      "firstname":{"i":15,"a":"firstname","t":"text","on":true,"fi":"Etunimi","en":"First name"},
+      "lastname":{"i":16,"a":"lastname","t":"text","on":true,"fi":"Sukunimi","en":"Last name"},
+      "birthdate":{"i":17,"a":"birthdate","t":"date","on":false,"fi":"Syntymäaika","en":"Birthdate"},
+      "degree":{"i":31,"a":"degree","t":"text","on":true,"fi":"Tutkinto","en":"Degree"},
+      "studyrightstartdate":{"i":21,"a":"studyrightstartdate","t":"date","on":true,"fi":"Opinto-oikeuden alkamispäivä","en":"Study right start date"},
+      "email":{"i":13,"a":"email","t":"text","on":false,"fi":"Sähköpostiosoite","en":"Email"},
+      "studystartdate":{"i":23,"a":"studystartdate","t":"date","on":false,"fi":"Opiskelun alkamispäivä","en":"Study start date"},
+      "studystarttime":{"i":24,"a":"studystarttime","t":"time","on":false,"fi":"Opiskelun alkamiskellonaika","en":"Study start time"},
+      "studystartaddress":{"i":22,"a":"studystartaddress","t":"text","on":false,"fi":"Opiskelun aloitusosoite","en":"Study start address"},
+      "location":{"i":33,"a":"location","t":"text","on":true,"fi":"Toimipaikka","en":"Location"},
+      "group":{"i":32,"a":"group","t":"text","on":false,"fi":"Ryhmä","en":"Group"}
+    },
+    "supportneed":{
+      "category":{"i":66,"a":"category","t":"category","on":true,"fi":"Ratkaistava asia","en":"Category"},
+      "status":{"i":68,"a":"status","t":"supportNeedStatus","on":true,"fi":"Asian tila","en":"Status"},
+      "survey":{"i":65,"a":"survey","t":"survey","on":false,"fi":"Kyselykierros","en":"Survey"},
+      "userrole":{"i":67,"a":"userrole","t":"userrole","on":false,"fi":"Käyttäjäryhmä","en":"User role"}
+    }
+  }
+};
+</script>
+
+<link rel="apple-touch-icon" sizes="180x180" href="./favicon/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="./favicon/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="./favicon/favicon-16x16.png">
+<link rel="manifest" href="./favicon/site.webmanifest">
+<link rel="mask-icon" href="./favicon/safari-pinned-tab.svg" color="#5bbad5">
+<meta name="apple-mobile-web-app-title" content="Annie Advisor">
+<meta name="application-name" content="Annie Advisor">
+<meta name="msapplication-TileColor" content="#2b5797">
+<meta name="theme-color" content="#ffffff">
+
+<title>Annie.</title>
+</head>
+
+<body>
+<!--
+  -- PHP IMITATION -- COPY-PASTE annie.html contents here
+  --
+// include the actual HTML
+include('annie.html');
+-->
+<!-- build:js js/vendor.js -->
+<script src="../node_modules/jquery/dist/jquery.min.js"></script>
+<script src="../node_modules/angular/angular.min.js"></script>
+<script src="../node_modules/angular-route/angular-route.min.js"></script>
+<script src="../node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+<script src="../node_modules/bootstrap-multiselect/dist/js/bootstrap-multiselect.js"></script>
+<!-- endbuild -->
+<!-- build:css css/vendor.css -->
+<link rel="stylesheet" href="../node_modules/bootstrap/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="../node_modules/bootstrap-multiselect/dist/css/bootstrap-multiselect.css">
+<link rel="stylesheet" href="../node_modules/font-awesome/css/font-awesome.min.css">
+<!-- endbuild -->
+<!-- mustache <link rel="stylesheet" href="css/fonts.css"> end mustache -->
+<!-- dev --><link rel="stylesheet" href="../dev/fonts.css"><!-- enddev -->
+<link rel="stylesheet" href="css/annie.css">
+
+<script src="js/config.js"></script>
+<script src="js/root.app.js"></script>
+<script src="js/root.service.js"></script>
+<script src="js/root.filter.js"></script>
+<script src="js/root.controller.js"></script>
+<script>// it was at this point he knew he... had title
+  let titles = [];
+  if (CONFIG.title) {
+    titles.push(CONFIG.title);
+  } else {
+    titles.push("Annie.");
+  }
+  if (CONFIG.schoolName) {
+    titles.push(CONFIG.schoolName);
+  }
+  document.title = titles.join(" ");
+</script>
+
+<div data-ng-app="rootApp" data-ng-controller="rootController">
+
+<div class="container-fluid">
+
+  <layout-header></layout-header>
+  <layout-table></layout-table>
+  <layout-booking></layout-booking>
+
+  <div class="row">
+    <div class="col-xs-4">
+      <small><small><span id="build" class="color2"></span></small></small>
+      <script>
+        document.getElementById("build").innerHTML = '<span title="versio #'+version+'">#'+version+'</span>';
+      </script>
+    </div>
+    <div class="col-xs-4 text-center">
+      <div data-ng-if="!auth"><h1>Oops!</h1><p>That's not the way you want to go...</p></div>
+      <span>
+        &copy; 2019<span id="copyrightyear"></span> <a href="https://annieadvisor.com">Annie Advisor</a>
+        <script>
+          document.getElementById("copyrightyear").innerHTML = ","+new Date().getFullYear();
+        </script>
+      </span>
+    </div>
+    <div class="col-xs-4 text-right">
+    </div>
+  </div>
+
+</div>
+
+</div>
+<!-- / PHP IMITATION -->
+</body>
+</html>

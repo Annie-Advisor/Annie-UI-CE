@@ -1,9 +1,12 @@
 rootApp.service('DataService', ['$http', function($http) {
+  let supportneedsPageURI = CONFIG.supportneedsPageURI;
+  let contactMessagesURI = CONFIG.contactMessagesURI;
+  let supportneedCommentsURI = CONFIG.supportneedCommentsURI;
+  let contactSurveysURI = CONFIG.contactSurveysURI;
+
   let contactURI = CONFIG.contactURI;
   let surveyURI = CONFIG.surveyURI;
-  let messageURI = CONFIG.messageURI;
   let supportNeedURI = CONFIG.supportNeedURI;
-  let contactsurveyURI = CONFIG.contactsurveyURI;
   let commentURI = CONFIG.commentURI;
   let codesURI = CONFIG.codesURI;
   let metadataURI = CONFIG.metadataURI;
@@ -24,14 +27,18 @@ rootApp.service('DataService', ['$http', function($http) {
     });
   }
 
-  this.getMessages = function(id) {
-    return $http.get(messageURI+id)
+  this.getMessages = function(id,impersonate) {
+    let paramURI = "?";
+    if (impersonate) {
+      paramURI+="&impersonate="+impersonate;
+    }
+    return $http.get(contactMessagesURI+id+paramURI)
     .then(function(response) {
       return response.data;
     });
   }
 
-  this.getSupportNeeds = function(category,status,survey,userrole,degree,group,location) {
+  this.getSupportNeeds = function(category,status,survey,userrole,degree,group,location,impersonate) {
     let paramURI = "?";
     for (let i=0;i<category.length;i++) { paramURI+="&category="+ category[i]; }
     for (let i=0;i<status.length;  i++) { paramURI+="&status="+   status[i]; }
@@ -41,14 +48,21 @@ rootApp.service('DataService', ['$http', function($http) {
     for (let i=0;i<degree.length;  i++) { paramURI+="&degree="+   degree[i]; }
     for (let i=0;i<group.length;   i++) { paramURI+="&group="+    group[i]; }
     for (let i=0;i<location.length;i++) { paramURI+="&location="+ location[i]; }
-    return $http.get(supportNeedURI+paramURI)
+    if (impersonate) {
+      paramURI+="&impersonate="+impersonate;
+    }
+    return $http.get(supportneedsPageURI+paramURI)
     .then(function(response) {
       return response.data;
     });
   }
 
-  this.getSupportNeedHistory = function(id) {
-    return $http.get(supportNeedURI+id+'/history')
+  this.getSupportNeedHistory = function(id,impersonate) {
+    let paramURI = "?";
+    if (impersonate) {
+      paramURI+="&impersonate="+impersonate;
+    }
+    return $http.get(supportneedsPageURI+id+'/history'+paramURI)
     .then(function(response) {
       return response.data;
     });
@@ -70,23 +84,27 @@ rootApp.service('DataService', ['$http', function($http) {
   };
 
   this.getContactsurvey = function(id) {
-    return $http.get(contactsurveyURI+id)
+    return $http.get(contactSurveysURI+id)
     .then(function(response) {
       return response.data;
     });
   }
 
-  this.getComments = function(id) {
-    return $http.get(commentURI+id)
+  this.getComments = function(id,impersonate) {
+    let paramURI = "?";
+    if (impersonate) {
+      paramURI+="&impersonate="+impersonate;
+    }
+    return $http.get(supportneedCommentsURI+id+paramURI)
     .then(function(response) {
       return response.data;
     });
   }
 
-  this.putComment = function(id,data) {
+  this.putComment = function(data) {
     return $http({
       method: 'POST',
-      url: commentURI + id,
+      url: commentURI,
       data: data,
       headers: { 'Content-Type': 'application/json; charset=UTF-8' }
     })
@@ -122,10 +140,10 @@ rootApp.service('DataService', ['$http', function($http) {
 
   //
 
-  this.postSendSMS = function(id,data) {
+  this.postSendSMS = function(data) {
     return $http({
       method: 'POST',
-      url: sendsmsURI + id,
+      url: sendsmsURI,
       data: data,
       headers: { 'Content-Type': 'application/json; charset=UTF-8' }
     })

@@ -15,15 +15,15 @@
 <link rel="stylesheet" href="../node_modules/bootstrap-multiselect/dist/css/bootstrap-multiselect.css">
 <link rel="stylesheet" href="../node_modules/font-awesome/css/font-awesome.min.css">
 <!-- endbuild -->
-<!-- mustache <link rel="stylesheet" href="css/fonts.css"> end mustache -->
+<!-- mustache <link rel="stylesheet" href="css/fonts.css?build=my_app_specific_build_number"> end mustache -->
 <!-- dev --><link rel="stylesheet" href="../dev/fonts.css"><!-- enddev -->
-<link rel="stylesheet" href="css/annie.css">
+<link rel="stylesheet" href="css/annie.css?build=my_app_specific_build_number">
 
-<script src="js/config.js"></script>
-<script src="js/root.app.js"></script>
-<script src="js/root.service.js"></script>
-<script src="js/root.filter.js"></script>
-<script src="js/root.controller.js"></script>
+<script src="js/config.js?build=my_app_specific_build_number"></script>
+<script src="js/root.app.js?build=my_app_specific_build_number"></script>
+<script src="js/root.service.js?build=my_app_specific_build_number"></script>
+<script src="js/root.filter.js?build=my_app_specific_build_number"></script>
+<script src="js/root.controller.js?build=my_app_specific_build_number"></script>
 <script>// it was at this point he knew he... had title
   let titles = [];
   if (CONFIG.title) {
@@ -55,9 +55,9 @@
     <div class="col-xs-4 text-center">
       <div data-ng-if="!auth"><h1>Oops!</h1><p>That's not the way you want to go...</p></div>
       <span>
-        &copy; 2019<span id="copyrightyear"></span> <a href="https://annieadvisor.com">Annie Advisor</a>
+        &copy; <span id="copyrightyear"></span> <a href="https://annieadvisor.com">Annie Advisor</a>
         <script>
-          document.getElementById("copyrightyear").innerHTML = "-"+new Date().getFullYear();
+          document.getElementById("copyrightyear").innerHTML = ""+new Date().getFullYear();
         </script>
       </span>
     </div>

@@ -17,9 +17,9 @@ function($scope,$http,$filter,$interval,$timeout,Data
   }
   $scope.authentication(); //test immediately
   $scope.auth = auth;//copy once
-
-  $scope.school = {};
-  $scope.municipality = {};
+  $scope.impersonate = {
+    uid: null
+  };
 
   //
   // BACKEND / DATA
@@ -94,7 +94,7 @@ function($scope,$http,$filter,$interval,$timeout,Data
   $scope.getMessages = function(contact) {
     $scope.debug && console.debug('getMessages',contact);
     $scope.authentication();//test
-    Data.getMessages(contact)
+    Data.getMessages(contact,$scope.impersonate.uid)
     .then(function(data) {
       $scope.debug>1 && console.debug('getMessages',contact,data);
       // to events (history)
@@ -116,7 +116,7 @@ function($scope,$http,$filter,$interval,$timeout,Data
     $scope.authentication();//test
     // for events history
     // nb! contactdata values degree, group and location are NOT handled via supportneed API even though for some reason they are passed to it
-    Data.getSupportNeeds($scope.choices.category,$scope.choices.status,$scope.choices.survey,$scope.choices.userrole,$scope.choices.degree,$scope.choices.group,$scope.choices.location)
+    Data.getSupportNeeds($scope.choices.category,$scope.choices.status,$scope.choices.survey,$scope.choices.userrole,$scope.choices.degree,$scope.choices.group,$scope.choices.location,$scope.impersonate.uid)
     .then(function(data) {
       $scope.debug>1 && console.debug('getSupportNeeds',data);
       $scope.supportneeds = angular.copy(data);
@@ -185,7 +185,7 @@ function($scope,$http,$filter,$interval,$timeout,Data
     $scope.debug && console.debug('getSupportNeedHistory',contactid);
     $scope.authentication();//test
     // for events history
-    Data.getSupportNeedHistory(contactid)
+    Data.getSupportNeedHistory(contactid,$scope.impersonate.uid)
     .then(function(data) {
       $scope.debug>1 && console.debug('getSupportNeedHistory',contactid,data);
       // to history -- only
@@ -274,7 +274,7 @@ function($scope,$http,$filter,$interval,$timeout,Data
   $scope.getComments = function(supportneedid) {
     $scope.debug && console.debug('getComments',supportneedid);
     $scope.authentication();//test
-    Data.getComments(supportneedid)
+    Data.getComments(supportneedid,$scope.impersonate.uid)
     .then(function(data) {
       $scope.debug>1 && console.debug('getComments',supportneedid,data);
       angular.forEach(data,function(v,k){
@@ -303,8 +303,8 @@ function($scope,$http,$filter,$interval,$timeout,Data
       "body": newComment
     };
     data = $scope.putInit(data);
-    $scope.debug>1 && console.debug('putComment',supportneed,data);
-    Data.putComment(supportneed.id,data)
+    $scope.debug>1 && console.debug('putComment',data);
+    Data.putComment(data)
     .then(function(response){
       $scope.debug>1 && console.debug('putComment','then',response);
       if (response && response.status=="OK") {
@@ -333,8 +333,8 @@ function($scope,$http,$filter,$interval,$timeout,Data
       $scope.debug>1 && console.debug('getCodes','survey',data);
       angular.forEach(data,function(c,i){//at data list
         if (c.config) {
-          if (c.config.name) {
-            codes.survey[c.id] = c.config.name;
+          if (c.config.title) {
+            codes.survey[c.id] = c.config.title;
           }
         }
       });
@@ -382,7 +382,7 @@ function($scope,$http,$filter,$interval,$timeout,Data
       "context": "SUPPORTPROCESS"
     };
     $scope.debug>1 && console.debug('postSendSMS',data);
-    Data.postSendSMS($scope.selected.supportneed.contact,data)
+    Data.postSendSMS(data)
     .then(function(response){
       $scope.debug>1 && console.debug('postSendSMS','then',response);
       // indication of saving progress is shown via putSupportNeed but
@@ -499,9 +499,13 @@ function($scope,$http,$filter,$interval,$timeout,Data
     if (type=='number') {
       return value;
     }
-    if ((type=='survey' || type=='category' || type=='supportNeedStatus' || type=='userrole')
+    if ((type=='category' || type=='supportNeedStatus' || type=='userrole')
      && $scope.codes.hasOwnProperty(type) && $scope.codes[type].hasOwnProperty(value)) {
       return $scope.codes[type][value][$scope.lang];
+    }
+    if ((type=='survey')
+     && $scope.codes.hasOwnProperty(type) && $scope.codes[type].hasOwnProperty(value)) {
+      return $scope.codes[type][value];
     }
     if (type=='date' || type=='datetime') {
       // may be a number (excel value?)
@@ -523,15 +527,23 @@ function($scope,$http,$filter,$interval,$timeout,Data
         value = value.replace("Oct.","Oct");
         value = value.replace("Nov.","Nov");
         value = value.replace("Dec.","Dec");
-        //Firefox hack: ends "+03" -> "+0300"
-        if (value.endsWith("+03")) {
-          value = value.replace("+03","+03:00");
-        }
-        if (value.endsWith("+02")) {
-          value = value.replace("+02","+02:00");
+        //Firefox hack: ends "+03" -> "+03:00"
+        if (value.match(/\+[0-9][0-9]$/)) {
+          value = value+":00";
         }
         if (value.includes("-") && !value.includes("T")) {
           value = value.replace(/\s/g, 'T');
+        }
+        if (!Date.parse(value)) {
+          // "25.3.2021" -> "2021-03-25"
+          if (value.includes(".")) {
+            let vv = value.split(".");
+            if (vv && vv.length>2) {
+              value =vv[2];
+              value+="-"+(vv[1].length<2?"0":"")+vv[1];
+              value+="-"+(vv[0].length<2?"0":"")+vv[0];
+            }
+          }
         }
       }
       let d = new Date(value);
@@ -564,6 +576,10 @@ function($scope,$http,$filter,$interval,$timeout,Data
     $scope.selected = {};
     $scope.selected.contact = angular.copy(contactdata); // copy, do not reference
     $scope.selected.supportneed = angular.copy(supportneed);
+    // update models
+    $scope.newCategory = $scope.selected.supportneed.category;
+    $scope.newUserRole = $scope.selected.supportneed.userrole;
+
     $scope.events = [];//clear
     $scope.getMessages(contact);
     $scope.getSupportNeedHistory(contact);
@@ -726,7 +742,7 @@ let subMultiselect = function(referenceId,text,objsArrOrdered,multioptions) {
       filterPlaceholder: ($scope.lang=='fi'?'Etsi arvoa...':($scope.lang=='sv'?'Sök med värdet...':($scope.lang=='gr'?'Αναζήτηση':'Search...'))),
       numberDisplayed: 1,
       nonSelectedText: ($scope.lang=='fi'?'Suodata ':($scope.lang=='sv'?'Filtrera ':($scope.lang=='gr'?'Φίλτρο ':'Filter '))),
-      includeSelectAllOption: true,
+      includeSelectAllOption: (multioptions.selectAll===false?false:true),
       allSelectedText: ($scope.lang=='fi'?'Kaikki valittu':($scope.lang=='sv'?'Alla valda':'All chosen')),
       selectAllText: ($scope.lang=='fi'?'Valitse kaikki':($scope.lang=='sv'?'Välj alla':($scope.lang=='gr'?'Επιλογή όλων':'Choose all'))),
       //---
@@ -752,7 +768,33 @@ let subMultiselect = function(referenceId,text,objsArrOrdered,multioptions) {
           });
           return labels.join('<br>') + '';
         }
-      }
+      },
+      // Credits: https://stackoverflow.com/q/44244576
+      onChange: function(option, checked) {
+        // Get selected options.
+        var selectedOptions = jQuery('#multiselectAnnieuser option:selected');
+
+        if (selectedOptions.length >= 1) {
+          // Disable all other checkboxes.
+          var nonSelectedOptions = jQuery('#multiselectAnnieuser option').filter(function() {
+            return !jQuery(this).is(':selected');
+          });
+
+          nonSelectedOptions.each(function() {
+            var input = jQuery('input[value="' + jQuery(this).val() + '"]');
+            input.prop('disabled', true);
+            input.parent('li').addClass('disabled');
+          });
+        }
+        else {
+          // Enable all checkboxes.
+          jQuery('#multiselectAnnieuser option').each(function() {
+            var input = jQuery('input[value="' + jQuery(this).val() + '"]');
+            input.prop('disabled', false);
+            input.parent('li').addClass('disabled');
+          });
+        }
+      },
     });
 
     let options = [];
@@ -763,8 +805,11 @@ let subMultiselect = function(referenceId,text,objsArrOrdered,multioptions) {
       if (obj.text=="--") {
         optvalue = "";
       }
-      // nb! no language selection for degree, group or location
-      if (referenceId=='#multiselectDegree'||referenceId=='#multiselectGroup'||referenceId=='#multiselectLocation') {
+      // nb! no language selection for degree, group or location, or annieuser
+      if (referenceId=='#multiselectDegree'||referenceId=='#multiselectGroup'||referenceId=='#multiselectLocation'
+        ||referenceId=='#multiselectAnnieuser'
+        ||referenceId=='#multiselectSurvey'
+      ) {
         options.push({label: obj.text, title: obj.code, value: optvalue, selected: false});
       } else {
         options.push({label: obj.text[$scope.lang], title: obj.code, value: optvalue, selected: false});
@@ -838,21 +883,27 @@ let subMultiselect = function(referenceId,text,objsArrOrdered,multioptions) {
         optlabel = {
           fi:'<i class="color3 fa fa-exclamation-circle"></i> '+optlabel.fi,
           en:'<i class="color3 fa fa-exclamation-circle"></i> '+optlabel.en,
-          sv:'<i class="color3 fa fa-exclamation-circle"></i> '+optlabel.sv
+          sv:'<i class="color3 fa fa-exclamation-circle"></i> '+optlabel.sv,
+          gr:'<i class="color3 fa fa-exclamation-circle"></i> '+optlabel.gr,
+          es:'<i class="color3 fa fa-exclamation-circle"></i> '+optlabel.es
         };
       }
       if (key=='2') {
         optlabel = {
           fi:'<i class="color5 fa fa-question-circle"></i> '+optlabel.fi,
           en:'<i class="color5 fa fa-question-circle"></i> '+optlabel.en,
-          sv:'<i class="color5 fa fa-question-circle"></i> '+optlabel.sv
+          sv:'<i class="color5 fa fa-question-circle"></i> '+optlabel.sv,
+          gr:'<i class="color5 fa fa-question-circle"></i> '+optlabel.gr,
+          es:'<i class="color5 fa fa-question-circle"></i> '+optlabel.es
         };
       }
       if (key=='100') {
         optlabel = {
           fi:'<i class="color4 fa fa-check-circle"></i> '+optlabel.fi,
           en:'<i class="color4 fa fa-check-circle"></i> '+optlabel.en,
-          sv:'<i class="color4 fa fa-check-circle"></i> '+optlabel.sv
+          sv:'<i class="color4 fa fa-check-circle"></i> '+optlabel.sv,
+          gr:'<i class="color4 fa fa-check-circle"></i> '+optlabel.gr,
+          es:'<i class="color4 fa fa-check-circle"></i> '+optlabel.es
         };
       }
       return {"code":key,"text":optlabel};
@@ -866,6 +917,22 @@ let subMultiselect = function(referenceId,text,objsArrOrdered,multioptions) {
     angular.forEach($scope.choices.status,function(v,i){
       angular.element('#multiselectStatus').multiselect('select', v);
     });
+
+    // annieusers for impersonate
+    objsArrOrdered = [];
+    if ($scope.auth.superuser) {
+      angular.forEach($scope.auth.annieusers,function(au,aui) {
+        let auid=au.id;
+        let auname="";
+        if (au.meta && au.meta.firstname && au.meta.lastname) {
+          auname = au.meta.firstname+" "+au.meta.lastname;
+        }
+        //console.debug("DEBUG","AU",auid,auname);
+        objsArrOrdered.push({"code":auid,"text":auname});
+      });
+      objsArrOrdered = objsArrOrdered.sort( (a,b) =>  1 * ((a.text > b.text) ? 1 : ((b.text > a.text) ? -1 : 0)) );
+    }
+    subMultiselect('#multiselectAnnieuser',{fi:'annieuser',en:'annieuser'},objsArrOrdered,{filterBehavior:'both',dropRight:true,selectAll:false});
   }
 
   $scope.resetSupportneedsPage = function() {
@@ -935,9 +1002,6 @@ let subMultiselect = function(referenceId,text,objsArrOrdered,multioptions) {
     // will load: getCodes->resetArrays & getContacts->getSupportNeeds->resetSupportneedsPage->paginationCounts
 
     $scope.getCookieConfig();// ->resetArrays
-    $scope.school = $scope.getKoodistoKoodi('oppilaitosnumero',$scope.auth.schoolCode);
-    $scope.municipality = $scope.getKoodistoKoodi('kunta',$scope.auth.municipalityCode);
-    $scope.debug && console.debug("init auth",$scope.school,$scope.municipality);
     $scope.debug && console.debug("init contactArr",$scope.columns.contactArr);
     $scope.debug && console.debug("init supportneedArr",$scope.columns.supportneedArr);
 

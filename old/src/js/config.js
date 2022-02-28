@@ -11,12 +11,15 @@
  */
 let CONFIG = {};
 $.extend(true,CONFIG,{
+    "supportneedsPageURI": "../dev/supportneedspage.php/",//fix according to environment
+    "contactMessagesURI": "../dev/contactmessages.php/",//fix according to environment
+    "supportneedCommentsURI": "../dev/supportneedsupportneedcomments.php/",//fix according to environment
+    "contactSurveysURI": "../dev/contactcontactsurveys.php/",//fix according to environment
+
     "contactURI": "../dev/contact.php/",//fix according to environment
     "surveyURI": "../dev/survey.php/",//fix according to environment
-    "messageURI": "../dev/message.php/",//fix according to environment
     "supportNeedURI": "../dev/supportneed.php/",//fix according to environment
-    "contactsurveyURI": "../dev/contactsurvey.php/",//fix according to environment
-    "commentURI": "../dev/comment.php/",//fix according to environment
+    "commentURI": "../dev/supportneedcomment.php/",//fix according to environment
     "codesURI": "../dev/codes.php/",//fix according to environment
     "metadataURI": "../dev/metadata.php/",//fix according to environment
     "sendsmsURI": "../dev/sendsms.php/",//fix according to environment
