@@ -1,0 +1,38 @@
+@import './variables.scss';
+
+.unsubscribe {
+  margin-top: 4rem;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  width:100%;
+}
+
+.unsubscribe textarea {
+  border: 0;
+  border-radius: 2rem;
+  padding: 1.2rem 2rem;
+  width: 100%;
+  resize: none;
+  height: 10rem;
+  margin: 1rem auto 3rem;
+  font-weight: 500;
+  max-width: 50rem;
+}
+
+.unsubscribe h1 {
+  text-align: center;
+}
+
+.unsubscribe .image > svg {
+  height: 12rem;
+  width: 12rem;
+}
+
+.unsubscribe .button.no-background {
+  color: $black;
+}
+
+.unsubscribe .button.no-background svg {
+  margin-right: 1rem;
+}

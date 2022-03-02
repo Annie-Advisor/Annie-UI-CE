@@ -1,0 +1,237 @@
+@import '../fonts/fonts.scss';
+@import './variables.scss';
+
+html {
+  font-size: 10px;
+  box-sizing: border-box;
+}
+
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
+}
+
+body {
+  margin: 0;
+  font-family: $font-family;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: 1.2rem;
+  color: $black;
+  background-color: $background-color;
+  line-height: $line-height;
+}
+
+h1 {
+  color: $blue-text;
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin: 1.5rem 0 2rem;
+}
+
+h2 {
+  color: $blue-text;
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin: 1.2rem 0 1rem;
+}
+
+h3 {
+  color: $blue-text;
+  font-size: 1.4rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+hr {
+  border: 0;
+  height: 1px;
+  background-color: $border-color;
+  margin: 0;
+}
+
+h4 a {
+  text-decoration: underline;
+}
+
+[type="search"] {
+  background-color: $lightest-blue;
+  font-weight: 500;
+  color: $blue-text;
+  border-radius: $big-radius;
+  border: $main-border;
+  padding: 1.5rem 1rem 1.5rem 4rem;
+  outline-offset: 0;
+  margin-bottom: 1rem;
+  background-image: url(../svg/search.svg);
+  background-repeat: no-repeat;
+  background-position: left 1.5rem top 50%;
+  width: 20rem;
+}
+
+[type="search"]::placeholder {
+  color: $blue-text;
+}
+
+[type="search"]:focus {
+  background-color: $white;
+}
+
+button {
+  cursor: pointer;
+}
+
+button > svg {
+  vertical-align: middle;
+}
+
+.round-button {
+  border-radius: 1.75rem;
+  padding: 1rem 1.5rem;
+  background-color: inherit;
+  border: 1px solid $blue;
+  font-weight: 600;
+  color: $blue;
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.round-button:hover {
+  background-color: $light-blue;
+}
+
+button.main, .button.main {
+  font-weight: 700;
+  color: $white;
+  border-radius: $big-radius;
+  min-width: 30rem;
+  padding: 2rem 3rem;
+  font-size: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  cursor: pointer;
+  min-height: 6rem;
+}
+
+button.no-background, .button.no-background {
+  font-weight: 500;
+  color: $grey;
+  background-color: transparent;
+  border-radius: $big-radius;
+  min-width: 30rem;
+  padding: 2rem 3rem;
+  font-size: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  cursor: pointer;
+  min-height: 6rem;
+}
+
+button.no-background:hover {
+  color: $black;
+}
+
+button.no-background.light {
+  color: $blue-grey;
+}
+
+button.no-background.light:hover {
+  color: $grey;
+}
+
+button.no-background:hover svg * {
+  fill: $black;
+}
+
+button.main > svg, button.no-background > svg {
+  margin-right: 1rem;
+}
+
+button.primary, .button.primary {
+  background-color: $primary;
+}
+
+button.secondary, .button.secondary {
+  background-color: $secondary;
+}
+
+button.tertiary, .button.tertiary{
+  background-color: $tertiary;
+}
+
+button.primary:hover, .button.primary:hover {
+  background-color: $hover-primary;
+}
+
+button.secondary:hover, .button.secondary:hover {
+  background-color: $hover-secondary
+}
+
+button.tertiary:hover, .button.tertiary:hover {
+  background-color: $hover-tertiary;
+}
+
+button:disabled, .button:disabled {
+  opacity: .33;
+  cursor: not-allowed;
+}
+
+label.round-button {
+  display: inline-block;
+  cursor: pointer;
+  user-select: none;
+}
+
+.button-group {
+  text-align: center;
+  margin: -.5rem -.35rem;
+}
+
+.button-group [type="checkbox"] {
+  visibility: hidden;
+  display: none;
+}
+
+.button-group > .button, .button-group > button {
+  margin: .5rem .35rem;
+}
+
+.button-group [type="checkbox"]:checked + label {
+  background-color: $blue;
+  color: $white;
+}
+
+.button.main > svg {
+  margin-right: 1rem;
+}
+
+.button.main > svg * {
+  fill: $white;
+}
+
+.icon-button {
+  border-radius: 50%;
+  background-color: $background-color;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border: 0;
+}
+
+@media (max-width:678px) {
+  [type=search] {
+    width: 100%;
+  }
+}

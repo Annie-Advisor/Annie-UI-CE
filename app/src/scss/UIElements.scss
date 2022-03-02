@@ -1,0 +1,51 @@
+@import './variables.scss';
+
+.skeleton {
+  background-color: $light-grey;
+  border-radius: 4px;
+  animation: pulse 1s alternate infinite;
+}
+
+.skeleton.circle {
+  border-radius: 100%;
+}
+
+@keyframes pulse {
+  0% {background-color: $transparent-grey;}
+  100% {background-color: $light-grey;}
+}
+
+.status {
+  border: 1px solid $grey;
+  border-radius: $small-radius;
+  text-transform: uppercase;
+  font-weight: 600;
+  font-size: 1.2rem;
+  background-color: $white;
+  display: inline-block;
+  padding: .2rem .5rem;
+  line-height: 1em;
+  margin-right: .5rem;
+}
+
+.status.open {
+  color: $orange;
+  border-color: $orange;
+}
+
+.status.seen {
+  color: $green;
+  border-color: $green;
+}
+
+.status.new {
+  color: $white;
+  border-color: $orange;
+  background-color: $orange;
+}
+
+.status.error {
+  background-color: $blue-grey;
+  color: $white;
+  border-color: $blue-grey;
+}
