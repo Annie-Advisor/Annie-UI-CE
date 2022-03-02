@@ -3,16 +3,22 @@ import "./scss/LocaleSwitcher.scss"
 import {IntlProvider} from "react-intl"
 import locale_en from "./lang/en-US.json";
 import locale_fi from "./lang/fi-FI.json";
+import locale_es from "./lang/es-ES.json";
+import locale_it from "./lang/it-IT.json";
+
+// TODO: Add translation files for es and it
 
 const translations = {
     'en': locale_en,
-    'fi': locale_fi
+    'fi': locale_fi,
+    'es': locale_es,
+    'it': locale_it
 }
 
 let userLocale
 if (localStorage.getItem("userLocale")) {
     userLocale = localStorage.getItem("userLocale")
-} else if (navigator.language.split(/[-_]/)[0] === 'en' || navigator.language.split(/[-_]/)[0] === 'fi') {
+} else if (navigator.language.split(/[-_]/)[0] === 'en' || navigator.language.split(/[-_]/)[0] === 'fi' || navigator.language.split(/[-_]/)[0] === 'es' || navigator.language.split(/[-_]/)[0] === 'it') {
     userLocale = navigator.language.split(/[-_]/)[0] // split() removes region code
 } else {
     userLocale = 'en'

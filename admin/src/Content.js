@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useEffect, useState} from "react";
 import './scss/Content.scss';
 import {Route, Switch, Redirect} from "react-router-dom"
 import Surveys from "./views/Surveys"
@@ -6,9 +6,22 @@ import Contacts from "./views/Contacts"
 import Users from "./views/Users"
 import Sidebar from "./Sidebar"
 import SurveyView from "./views/SurveyView"
+import useWindowDimensions from "./DataFunctions";
 
 export default function Content() {
-    return <div className={"content-container"}>
+    const [windowSizeClass, setWindowSizeClass] = useState("")
+    let contentClass = "content-container " + windowSizeClass
+    const {width} = useWindowDimensions()
+    useEffect(()=>{
+        if (windowSizeClass !== "tablet" && width < 769) {
+            setWindowSizeClass("tablet")
+        }
+        if (windowSizeClass === "tablet" && width > 768) {
+            setWindowSizeClass("")
+        }
+    },[width])
+
+    return <div className={contentClass}>
         <Switch>
             <Route exact path={"/"}>
                 <Sidebar />

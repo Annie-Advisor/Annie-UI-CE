@@ -6,15 +6,15 @@
 }
 
 .message-container.has-steps::before {
+  position: absolute;
   display: block;
   content: '';
-  width: 1px;
-  background-color: $border-color;
-  height: calc(100% - 7rem);
-  position: absolute;
-  margin-left: 2rem;
-  margin-top: 5rem;
-  margin-bottom: 1rem;
+  height: 1px;
+  width: 1.5rem;
+  background-color: #1f2659;
+  color: #1f2659;
+  top: 2rem;
+  left: -1.5rem;
 }
 
 /*TODO: Fix lines on preview and message editor*/
@@ -34,18 +34,28 @@
   position: relative;
 }
 
+.survey-edit .message-children.line::before {
+  height: calc(100% - 6rem);
+}
+
 .message-children .message::before, .message-toolbar::before  {
+  position: absolute;
   display: block;
   content: '';
   height: 1px;
-  background-color: $border-color;
-  width: 2rem;
-  position: absolute;
-  margin-left: -3rem;
-  margin-top: 2rem;
+  width: 1.5rem;
+  background-color: #1f2659;
+  color: #1f2659;
+  top: 2rem;
+  left: -1.5rem;
 }
 
-.message-icon, .toolbar-option .icon {
+.message-toolbar:first-child::before {
+  width: 3rem;
+  left: -3rem;
+}
+
+.message-icon{
   width: 4rem;
   min-width: 4rem;
   height: 4rem;
@@ -86,6 +96,11 @@
   box-shadow: $block-shadow;
 }
 
+div[disabled] {
+  opacity: .8;
+  cursor: not-allowed;
+}
+
 .message-content > div {
   display: flex;
 }
@@ -101,54 +116,90 @@
 }
 
 .message-toolbar {
-  margin-left: 5rem;
   display: flex;
+  flex-direction: column;
   position: relative;
+  height: max-content;
+  width: max-content;
+  margin-bottom: 2rem;
+}
+
+.message-card + .message-toolbar {
+  margin-left: 1.5rem;
 }
 
 .message-toolbar .toolbar-option {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
 }
 
-.message-toolbar button {
-  background-color: $light-grey-on-grey;
+.message-toolbar button.option, .message-toolbar button.add-step {
+  background-color: $darker-grey;
   border-radius: $border-radius;
-  padding: 1rem 1.5rem;
-  font-weight: 600;
-  font-size: 1.4rem;
+  padding: 1rem 1.5rem 1rem 1rem;
+  font-weight: 500;
   height: 4rem;
-  margin-right: 2rem;
+  text-align: left;
+  color: $white;
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.message-toolbar button.option:not(.add-step)::before {
+  content: '';
+  width: 1px;
+  height: 1rem;
+  background-color: $blue-text;
+  position: absolute;
+  top: -1rem;
+  left: 2rem;
+}
+
+.message-toolbar button:first-child::before {
+  display: none;
 }
 
 .message-toolbar button.add-step {
-  width: 4rem;
-  background-color: $light-grey-on-grey;
+  background-color: $beige;
   box-shadow: none;
+  color: $blue-text;
+  font-weight: 600;
+  justify-content: center;
+  border: 1px solid $border-color;
+  width: 4rem;
+  margin-bottom: 0;
+  padding: 1rem;
 }
 
-.message-toolbar .toolbar-option > div {
-  align-self: center;
-  cursor: pointer;
-  color: $grey-text;
+.message-toolbar button.add-step:hover {
+  background-color: $beige-hover;
 }
 
-.message-toolbar .toolbar-option > div:hover {
+.message-toolbar button .icon {
+  margin-right: 1rem;
+  min-width: 1.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.message-toolbar button  .icon > svg {
+  max-height: 1.8rem;
+  max-width: 1.8rem;
+  min-height: 1.8rem;
+  min-width: 1.8rem;
+}
+
+.message-toolbar button.close {
+  border-radius: $admin-radius;
+  background-color: $light-grey-on-grey;
   color: $black;
 }
 
-.message-toolbar button.option {
-  display: flex;
-  padding: 0;
-  align-items: center;
-}
-
-.message-toolbar button.option .icon {
-  margin: -1px;
-}
-
-.message-toolbar button.option .text {
-  padding: 1rem 1.5rem 1rem 1.5rem;
+.message-toolbar button.close:hover {
+  background-color: $grey-on-grey;
 }
 
 .json code {
@@ -194,4 +245,101 @@
 
 .support-need-tools > div {
   margin-left: 1rem;
+}
+
+.branch-editor {
+  display: flex;
+}
+
+.branch-editor > input[type="text"] {
+  font-size: 1.3rem;
+  color: inherit;
+  background-color: transparent;
+  font-weight: inherit;
+  margin: 0 .5rem 0 -.5rem;
+  padding: .5rem;
+  cursor: pointer;
+  width: 5rem;
+  text-align: left;
+}
+
+.branch-editor > input[type="text"]:hover {
+  border: 1px solid $light-grey-on-grey;
+}
+
+.branch-editor > input[type="text"]:focus {
+  border-color: $white;
+}
+
+.branch-editor > input[type="text"].active {
+  border: 1px solid $light-grey-on-grey;
+}
+
+.branch-editor > input[type="text"].error {
+  border: 1px solid $red;
+}
+
+.branch-editor button {
+  background-color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.message-support-need {
+  flex-wrap: wrap;
+}
+
+.message-support-need > * {
+  margin-bottom: .5rem;
+}
+
+.message-support-need svg {
+  max-height: 1.8rem;
+  max-width: 1.8rem;
+  min-height: 1.8rem;
+  min-width: 1.8rem;
+}
+
+.message-support-need button.delete {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-left:auto;
+  padding: 0 .25rem;
+}
+
+.message-support-need button.delete * {
+  stroke: $darker-grey;
+}
+
+.message-support-need button.delete:hover * {
+  stroke: $red;
+}
+
+.support-need-toggle {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.support-need-toggle > svg {
+  margin-right: .5rem;
+}
+
+.support-providers {
+  display: flex;
+  align-items: center;
+}
+
+.support-providers p.placeholder {
+  margin: .5rem 1rem;
+}
+
+.messages-container .message-group .message-support-need .block {
+  cursor: pointer;
+}
+
+.messages-container .message-group .message-support-need .block.support-provider:hover {
+  background-color: $beige-hover;
 }

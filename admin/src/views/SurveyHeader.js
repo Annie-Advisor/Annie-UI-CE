@@ -1,14 +1,21 @@
 import {FormattedMessage, useIntl} from "react-intl";
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useMemo, useState} from "react";
 import '../scss/SurveyHeader.scss';
 import {Link, Prompt, useHistory, useLocation, useParams} from "react-router-dom";
 import {ReactComponent as BackArrow} from "../svg/back.svg";
 import {Modal, StatusText, Toast} from "../UIElements";
-import {useOriginalSurveyData, useOriginalUserSurveyData, useSurveyData, useUserSurveyData} from "./SurveyView";
+import {
+    useOriginalSurveyData,
+    useOriginalUserSurveyData,
+    useSurveyData,
+    useUserSurveyData
+} from "./SurveyView";
 import {PostSurveyWithId, PostUsersToAnnieUserSurvey, UpdateSurveyWithId} from "../api/APISurvey";
-import {formatDate, updateTimeToServerFormat} from "../Formats";
+import { updateTimeToServerFormat} from "../Formats";
 import _ from "lodash";
 import {ReactComponent as LoaderIcon} from "../svg/loader.svg";
+import {useAuthData, useCurrentUserData} from "../App";
+import {SurveySummary} from "./SurveySummary";
 
 export default function SurveyHeader() {
     const {surveyData} = useSurveyData()
@@ -26,17 +33,7 @@ export default function SurveyHeader() {
 
 function HeaderRender({surveyData, originalSurveyData, userSurveyData, originalUserSurveyData}) {
     const intl = useIntl()
-    let surveyName
-    switch (intl.locale) {
-        case "en":
-            surveyName = surveyData.config.name.en
-            break
-        case "fi":
-            surveyName = surveyData.config.name.fi
-            break
-        default:
-            surveyName = surveyData.config.name.en
-    }
+    const surveyName = surveyData.config.title
     let name
     if (surveyData.id === "new" && !surveyName) {
         name = intl.formatMessage(
@@ -89,6 +86,9 @@ function PromptDialog({unsavedChanges}) {
     const intl = useIntl()
     let history = useHistory()
     let { surveyId } = useParams()
+    let createNewSurvey = surveyId === "new"
+    const {authData} = useAuthData()
+    const surveyIsDeleted = surveyData.hasOwnProperty("status") && surveyData.status === "DELETED"
 
     useEffect(() => {
         if (confirmNavigation) {
@@ -98,7 +98,8 @@ function PromptDialog({unsavedChanges}) {
             localStorage.removeItem("userSurveyData-new")
             history.push(nextLocationPathname)
         }
-    }, [confirmNavigation, surveyData.id, history, nextLocationPathname])
+        return () => {setConfirmNavigation(false)}
+    }, [confirmNavigation])
 
     const navigateToLink = () => {
         setConfirmNavigation(true)
@@ -122,22 +123,8 @@ function PromptDialog({unsavedChanges}) {
 
     const saveChanges = () => {
         const newSurveyData = {...surveyData}
-        for (const lang in newSurveyData.config.name) {
-            if (newSurveyData.config.name[lang].length === 0) {
-                let otherLangName
-                for (const otherLang in newSurveyData.config.name) {
-                    if (newSurveyData.config.name[otherLang].length !== 0) {
-                        otherLangName = newSurveyData.config.name[otherLang]
-                        break
-                    } else {
-                        otherLangName = ""
-                    }
-                }
-                newSurveyData.config.name[lang] = otherLangName
-            }
-        }
         newSurveyData.updated = updateTimeToServerFormat(new Date())
-        newSurveyData.updatedby = "Annie Survey Manager"
+        newSurveyData.updatedby = authData.uid
         if (surveyId === "new") {
             newSurveyData.id = newID
             setSurveyData(newSurveyData)
@@ -180,6 +167,96 @@ function PromptDialog({unsavedChanges}) {
             })
         }
     }
+
+
+    // TODO: refactor repeated code
+
+    const [showPublishSummary, setShowPublishSummary] = useState(false)
+    const [surveyChecked, setSurveyChecked] = useState(false)
+    const [showToast, setShowToast] = useState(false)
+    const [toastText, setToastText] = useState("")
+    const [toastStatus, setToastStatus] = useState("")
+
+    function clearLocalStorage() {
+        localStorage.removeItem("stored-"+surveyData.id)
+        localStorage.removeItem("userSurveyData-"+surveyData.id)
+        localStorage.removeItem("stored-new")
+        localStorage.removeItem("userSurveyData-new")
+    }
+
+    const saveSurvey = (newSurvey, draft) => {
+        const newSurveyData = {...surveyData}
+        newSurveyData.updated = updateTimeToServerFormat(new Date())
+        newSurveyData.updatedby = authData.uid
+        if (draft) {
+            newSurveyData.status = "DRAFT"
+        } else {
+            if (newSurveyData.status === "DRAFT") {
+                newSurveyData.status = "SCHEDULED"
+            }
+        }
+        setSurveyData(newSurveyData)
+        surveyUpdate.mutate(newSurveyData, {
+            onError: () => {
+                setShowToast(true)
+                setToastText(intl.formatMessage(
+                    {
+                        id: 'toast.saveFailed',
+                        defaultMessage: 'The save failed. Please try again.',
+                    }))
+                setToastStatus("alert")
+            },
+            onSuccess: () => {
+                setOriginalSurveyData(_.cloneDeep(newSurveyData))
+                annieUserSurveyPost.mutate(userSurveyData, {
+                    onError: () => {
+                        setShowToast(true)
+                        setToastText(intl.formatMessage(
+                            {
+                                id: 'toast.saveFailed',
+                                defaultMessage: 'The save failed. Please try again.',
+                            }))
+                        setToastStatus("alert")
+                    },
+                    onSuccess: () => {
+                        setOriginalUserSurveyData(_.cloneDeep(userSurveyData))
+                        clearLocalStorage()
+                        setShowPublishSummary(false)
+                        setShowToast(true)
+                        setToastText(intl.formatMessage(
+                            {
+                                id: 'toast.saveSuccess',
+                                defaultMessage: 'Survey Saved!',
+                            }))
+                        setToastStatus("success")
+                    }
+                })
+            }
+        })
+    }
+
+    function saveOrOpenOverview() {
+        if (surveyData.status === "DRAFT" || surveyIsDeleted) {
+            saveChanges()
+        } else {
+            setShowSavePrompt(false)
+            setShowPublishSummary(true)
+        }
+    }
+
+    let modalSaveText = intl.formatMessage(
+        {
+            id: 'survey.save.save',
+            defaultMessage: 'Save',
+        })
+    let checkAndSave = intl.formatMessage({
+        id: 'survey.save.checkSave',
+        defaultMessage: 'Check & Save',
+    })
+
+    const {currentUserData} = useCurrentUserData()
+    const userSuperAdmin = currentUserData.superuser && currentUserData.id.endsWith("@annieadvisor.com")
+
     return <>
         <Prompt
             when={unsavedChanges}
@@ -199,15 +276,44 @@ function PromptDialog({unsavedChanges}) {
                    id: 'survey.unsavedChanges.discard',
                    defaultMessage: "Don't save",
                })}
-               confirmText={intl.formatMessage({
-                   id: 'survey.unsavedChanges.confirm',
-                   defaultMessage: 'Save changes',
-               })}
+               confirmText={(surveyData.status === "DRAFT" || surveyIsDeleted) ? modalSaveText : checkAndSave}
                discardAction={navigateToLink}
                closeModal={cancelPrompt}
-               confirmAction={saveChanges}
+               confirmAction={saveOrOpenOverview}
         />
         }
+        {showPublishSummary &&
+        <Modal
+            closeModal={()=>setShowPublishSummary(false)}
+            header={intl.formatMessage(
+                {
+                    id: 'survey.overview',
+                    defaultMessage: 'Survey Overview',
+                })}
+            confirmAction={()=>saveSurvey(createNewSurvey)}
+            confirmText={modalSaveText}
+            scrollContent={true}
+            confirmDisabled={!surveyChecked}
+            disabledText={<>
+                {intl.formatMessage({
+                id: 'survey.overview.checkErrors',
+                defaultMessage: 'Check errors before publishing'
+            })}
+                {userSuperAdmin &&
+                <button className={"override"} onClick={()=>setSurveyChecked(true)}>
+                    {intl.formatMessage(
+                        {
+                            id: 'survey.overview.bypassTests',
+                            defaultMessage: 'Skip checks',
+                        })}
+                </button>
+                }
+            </>}
+        >
+            <SurveySummary setSurveyChecked={surveyStatus => setSurveyChecked(surveyStatus)}/>
+        </Modal>
+        }
+        <Toast show={showToast} text={toastText} status={toastStatus} hideToast={()=>setShowToast(false)}/>
     </>
 }
 
@@ -223,10 +329,14 @@ function SaveEdits({setShowToast, setToastText, setToastStatus}) {
     const annieUserSurveyPost = PostUsersToAnnieUserSurvey()
     let history = useHistory()
     let { surveyId } = useParams()
-    let createNewSurvey = surveyId === "new"
-    let surveyIsDraft = surveyData.status === "DRAFT"
+    const createNewSurvey = surveyId === "new"
+    const surveyIsDraft = surveyData.hasOwnProperty("status") && surveyData.status === "DRAFT"
+    const surveyIsScheduled = surveyData.hasOwnProperty("status") && surveyData.status === "SCHEDULED"
+    const surveyIsDeleted = surveyData.hasOwnProperty("status") && surveyData.status === "DELETED"
     const intl = useIntl()
     const [showPublishSummary, setShowPublishSummary] = useState(false)
+    const [surveyChecked, setSurveyChecked] = useState(false)
+    const {authData} = useAuthData()
 
     function clearLocalStorage() {
         localStorage.removeItem("stored-"+surveyData.id)
@@ -255,22 +365,8 @@ function SaveEdits({setShowToast, setToastText, setToastStatus}) {
     //TODO: Refactor button functions and that statuses are properly set
     const saveSurvey = (newSurvey, draft) => {
         const newSurveyData = {...surveyData}
-        for (const lang in newSurveyData.config.name) {
-            if (newSurveyData.config.name[lang].length === 0) {
-                let otherLangName
-                for (const otherLang in newSurveyData.config.name) {
-                    if (newSurveyData.config.name[otherLang].length !== 0) {
-                        otherLangName = newSurveyData.config.name[otherLang]
-                        break
-                    } else {
-                        otherLangName = ""
-                    }
-                }
-                newSurveyData.config.name[lang] = otherLangName
-            }
-        }
         newSurveyData.updated = updateTimeToServerFormat(new Date())
-        newSurveyData.updatedby = "Annie Survey Manager"
+        newSurveyData.updatedby = authData.uid
         if (draft) {
             newSurveyData.status = "DRAFT"
         } else {
@@ -343,6 +439,7 @@ function SaveEdits({setShowToast, setToastText, setToastStatus}) {
                         onSuccess: () => {
                             setOriginalUserSurveyData(_.cloneDeep(userSurveyData))
                             clearLocalStorage()
+                            setShowPublishSummary(false)
                             setShowToast(true)
                             setToastText(intl.formatMessage(
                                 {
@@ -356,13 +453,18 @@ function SaveEdits({setShowToast, setToastText, setToastStatus}) {
             })
         }
     }
-    let draftText, saveText
+    let draftText, saveText, modalSaveText
     draftText = intl.formatMessage(
         {
             id: 'survey.save.save',
             defaultMessage: 'Save',
         })
     saveText = intl.formatMessage(
+        {
+            id: 'survey.save.checkPublish',
+            defaultMessage: 'Check & Publish',
+        })
+    modalSaveText = intl.formatMessage(
         {
             id: 'survey.save.publish',
             defaultMessage: 'Publish',
@@ -377,10 +479,18 @@ function SaveEdits({setShowToast, setToastText, setToastStatus}) {
     if (!surveyIsDraft && !createNewSurvey) {
         saveText = intl.formatMessage(
             {
+                id: 'survey.save.checkSave',
+                defaultMessage: 'Check & Save',
+            })
+        modalSaveText = intl.formatMessage(
+            {
                 id: 'survey.save.save',
                 defaultMessage: 'Save',
             })
     }
+
+    const {currentUserData} = useCurrentUserData()
+    const userSuperAdmin = currentUserData.superuser && currentUserData.id.endsWith("@annieadvisor.com")
 
     return <>
         <div className={"save-toolbar"}>
@@ -404,100 +514,55 @@ function SaveEdits({setShowToast, setToastText, setToastStatus}) {
                     </button>
                 </> :
                 <>
+                    {(surveyIsScheduled || surveyIsDraft || surveyIsDeleted) &&
                     <button className={"draft"} onClick={() => {
                         saveSurvey(createNewSurvey, true)
                     }}>
                         {draftText}
                     </button>
+                    }
+                    {!surveyIsDeleted &&
                     <button className={"save"} onClick={() => {
-                        // setShowPublishSummary(true)
-                        saveSurvey(createNewSurvey)
+                        setShowPublishSummary(true)
+                        // saveSurvey(createNewSurvey)
                     }}>
                         {saveText}
                     </button>
+                    }
                 </>
             }
         </div>
         {showPublishSummary &&
         <Modal
             closeModal={()=>setShowPublishSummary(false)}
-            header={"Survey Summary"}
+            header={intl.formatMessage(
+                {
+                    id: 'survey.overview',
+                    defaultMessage: 'Survey Overview',
+                })}
             confirmAction={()=>saveSurvey(createNewSurvey)}
-            confirmText={saveText}
+            confirmText={modalSaveText}
+            scrollContent={true}
+            confirmDisabled={!surveyChecked}
+            disabledText={<>
+                {intl.formatMessage({
+                    id: 'survey.overview.checkErrors',
+                    defaultMessage: 'Check errors before publishing'
+                })}
+                {userSuperAdmin &&
+                <button className={"override"} onClick={()=>setSurveyChecked(true)}>
+                    {intl.formatMessage(
+                        {
+                            id: 'survey.overview.bypassTests',
+                            defaultMessage: 'Skip checks',
+                        })}
+                </button>
+                }
+            </>}
         >
-            <SurveySummary />
-            </Modal>
+            <SurveySummary setSurveyChecked={surveyStatus => setSurveyChecked(surveyStatus)}/>
+        </Modal>
         }
     </>
 }
 
-function SurveySummary() {
-    const {surveyData} = useSurveyData()
-    const {userSurveyData} = useUserSurveyData()
-    const intl = useIntl()
-    let surveyName, startTime, endTime
-    switch (intl.locale) {
-        case "en":
-            surveyName = surveyData.config.name.en
-            startTime = new Date(formatDate(surveyData.starttime)).toLocaleString("en-US")
-            endTime = new Date(formatDate(surveyData.endtime)).toLocaleString("en-US")
-            break
-        case "fi":
-            surveyName = surveyData.config.name.fi
-            startTime = new Date(formatDate(surveyData.starttime)).toLocaleString("fi")
-            endTime = new Date(formatDate(surveyData.endtime)).toLocaleString("fi")
-            break
-        default:
-            surveyName = surveyData.config.name.en
-            startTime = new Date(formatDate(surveyData.starttime)).toLocaleString("en-US")
-            endTime = new Date(formatDate(surveyData.endtime)).toLocaleString("en-US")
-    }
-
-    return <div className={"survey-summary-container"}>
-        <div>
-            <p>
-                {intl.formatMessage(
-                    {
-                        id: 'survey.information.name',
-                        defaultMessage: 'Name',
-                    })}
-            </p>
-            <p className={"fake-input"}>
-                {surveyName}
-            </p>
-        </div>
-        <div className={"dual"}>
-            <div>
-                <p>
-                    {intl.formatMessage(
-                    {
-                        id: 'survey.information.startTime',
-                        defaultMessage: 'Start Time',
-                    })}
-                </p>
-                <p className={"fake-input"}>{startTime}</p>
-            </div>
-            <div>
-                <p>
-                    {intl.formatMessage(
-                        {
-                            id: 'survey.information.endTime',
-                            defaultMessage: 'End Time',
-                        })}
-                </p>
-                <p className={"fake-input"}>{endTime}</p>
-            </div>
-        </div>
-        <div>
-            <p>
-                {intl.formatMessage({
-                    id: 'survey.supportNeeds',
-                    defaultMessage: 'Support Needs',
-                })}
-            </p>
-            <div className={"support-needs-container"}>
-
-            </div>
-        </div>
-    </div>
-}

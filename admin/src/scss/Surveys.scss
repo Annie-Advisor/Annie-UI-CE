@@ -124,10 +124,6 @@
   background-color: $light-grey-on-grey;
 }
 
-.search-sort-surveys .search {
-  margin-left: 3rem;
-}
-
 .search-group {
   margin-bottom: 1rem;
   user-select: none;
@@ -180,4 +176,92 @@
 .surveys .options-container > div {
   margin-bottom: 1rem;
   vertical-align: middle;
+}
+
+.surveys-layout {
+  display: flex;
+}
+
+.surveys-main {
+}
+
+.surveys-sidebar {
+  margin-right: 3rem;
+}
+
+.survey-sidebar-container {
+  position: sticky;
+  top: -3rem;
+  overflow-y: auto;
+  max-height: calc(100vh - 3rem);
+  padding-right: 3rem;
+  margin-right: -3rem;
+}
+
+.surveys-sidebar .radio-group {
+  padding: 0 0 1rem;
+  border: 0;
+  margin: 0 0 3rem;
+  border-bottom: 1px solid $border-color;
+}
+
+.surveys-sidebar form:last-child .radio-group {
+  border-bottom: 0;
+}
+
+.surveys-sidebar .radio-group legend {
+  font-weight: 500;
+  padding: 0;
+  margin-bottom: .6rem;
+}
+
+.surveys-sidebar .radio-group input {
+  display: none;
+}
+
+.surveys-sidebar .radio-group label {
+  white-space: nowrap;
+  padding: 1rem .5rem;
+  display: block;
+  line-height: 1;
+  cursor:pointer;
+  color: $grey-text;
+}
+
+.surveys-sidebar .radio-group label:hover {
+  background-color: $light-grey-on-grey;
+}
+
+.surveys-sidebar .radio-group input:checked + label {
+  font-weight: 500;
+  color: $blue-text;
+  text-decoration: underline;
+}
+
+.search-sort-surveys .sort-by {
+  margin-left: 4rem;
+}
+
+.surveys-sidebar form[disabled] {
+  pointer-events: none;
+  cursor: not-allowed;
+  opacity: .33;
+}
+
+.toggle-header {
+  cursor: pointer;
+  display: flex;
+  width: 100%;
+}
+
+.toggle-header .sort-icon {
+  margin-left: auto;
+}
+
+.sort-icon.asc .desc * {
+  stroke: $grey;
+}
+
+.sort-icon.desc .asc * {
+  stroke: $grey;
 }

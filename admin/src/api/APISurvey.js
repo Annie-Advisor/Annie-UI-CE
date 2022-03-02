@@ -16,13 +16,21 @@ export function AuthCheck() {
     })
 }
 
-export function GetSurveys() {
+export function GetSurveys(status) {
     return useQuery("surveys", async () => {
-        const { data } = await axios.get(
-            "/api/survey.php",
-            auth
-        )
-        return data
+        if (status) {
+            const { data } = await axios.get(
+                "/api/survey.php?status="+status,
+                auth
+            )
+            return data
+        } else {
+            const { data } = await axios.get(
+                "/api/survey.php",
+                auth
+            )
+            return data
+        }
     })
 }
 
@@ -77,6 +85,16 @@ export function GetUsers() {
     return useQuery("annieuser", async () => {
         const { data } = await axios.get(
             "/api/annieuser.php/",
+            auth
+        )
+        return data
+    })
+}
+
+export function GetUser(user) {
+    return useQuery("user", async () => {
+        const { data } = await axios.get(
+            "/api/annieuser.php/"+user,
             auth
         )
         return data
@@ -186,4 +204,18 @@ export function GetContacts() {
         )
         return data
     })
+}
+
+export async function archiveSurveyWithId(surveyId) {
+    try {
+        const response = await axios.get(
+            "/api/archive-survey-statistics.php?survey="+surveyId+"&archive=true",
+            auth
+        )
+        return response
+    } catch (error) {
+        console.error(error)
+        return error
+    }
+
 }

@@ -170,6 +170,11 @@ button.text:hover {
   text-decoration: underline;
 }
 
+button.icon {
+  background-color: transparent;
+  padding: 0;
+}
+
 .not-found {
   cursor: help;
 }

@@ -78,6 +78,7 @@ p.status circle {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 1rem 0;
 }
 
 .popover-toggle:hover {
@@ -88,11 +89,23 @@ p.status circle {
  fill: $black;
 }
 
-.popover > div {
+.popover > p {
   display: flex;
   align-items: center;
   cursor: pointer;
   white-space: nowrap;
+  font-size: 1.4rem;
+  padding: .5rem 2rem;
+  margin: 0 -2rem;
+}
+
+.popover > p.disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+.popover > p:hover {
+  background-color: $light-grey;
 }
 
 .popover svg {
@@ -113,6 +126,7 @@ p.status circle {
   align-items: center;
   justify-content: center;
   z-index: 9;
+  max-height: 100vh;
 }
 
 .close-modal {
@@ -130,6 +144,8 @@ p.status circle {
   border-radius: $border-radius;
   padding: 3rem;
   box-shadow: $box-shadow;
+  max-height: calc(100vh - 6rem);
+  max-width: calc(100vw - 6rem);
 }
 
 .modal .close-toggle {
@@ -145,7 +161,8 @@ p.status circle {
 .modal-options {
   display: flex;
   justify-content: flex-end;
-  margin-top: 5rem;
+  align-items: center;
+  margin-top: 3rem;
 }
 
 .modal-options button {
@@ -164,10 +181,19 @@ p.status circle {
   border-color: $green;
 }
 
+.modal-options button:disabled {
+  cursor: not-allowed;
+}
+
 .modal-options button.alert {
   color: $white;
   background-color: $red;
   border-color: $red;
+}
+
+.modal-options button.alert.text {
+  color: $red;
+  background-color: transparent;
 }
 
 .modal-options button.cancel {
@@ -179,12 +205,40 @@ p.status circle {
   margin-left: 0;
 }
 
+.modal-options .alert {
+  color: $red;
+  margin: 0 auto 0 0;
+}
+
+.modal-options .alert.confirm {
+  margin-right: 0;
+}
+
+.modal-options .alert svg {
+  vertical-align: middle;
+  margin-right: 1rem;
+}
+
+.scrollable .modal {
+  width: 1300px;
+}
+
+.scrollable .modal .scroll-content {
+  overflow-y: scroll;
+  max-height: calc(100vh - 27rem);
+  border-top: 1px solid $border-color;
+  border-bottom: 1px solid $border-color;
+  border-radius: $admin-radius;
+  margin: 2rem 0;
+}
+
 input[type="checkbox"].switch {
   display: none;
 }
 
 .switch-label {
   width: 3.5rem;
+  min-width: 3.5rem;
   height: 2.2rem;
   border-radius: 1.1rem;
   background-color: $grey;
@@ -226,7 +280,7 @@ input[type="checkbox"].switch {
 .popup {
   margin: auto;
   background-color: $white;
-  padding: 5rem 4rem;
+  padding: 5rem 4rem 4rem;
   border-radius: $admin-radius;
   border: $border;
   max-width: 80rem;
@@ -319,4 +373,32 @@ input[type="checkbox"].switch {
 
 .toast.alert svg * {
   stroke: $dark-red;
+}
+
+.button-switch {
+  margin-bottom: 2rem;
+}
+
+.button-switch > button {
+  padding: .75rem 1.5rem;
+  background-color: $background-blue;
+  color: $blue-text;
+}
+
+.button-switch > button.active {
+  background-color: $blue;
+  color: $white;
+  font-weight: 600;
+}
+
+.button-switch > button:first-child {
+  border-radius: 4px 0 0 4px;
+}
+
+.button-switch > button:last-child {
+  border-radius: 0 4px 4px 0;
+}
+
+.button-switch > button:not(.active):hover {
+  background-color: $background-blue-hover;
 }

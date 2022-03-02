@@ -1,0 +1,561 @@
+@import './variables.scss';
+
+.messages-container .icon {
+  font-weight: 600;
+  color: $white;
+}
+
+.summary-message {
+  display: flex;
+  align-items: center;
+}
+
+.summary-message > svg {
+  max-height: 1.5rem;
+  max-width: 1.5rem;
+  margin-left: 1rem;
+}
+
+.messages-container .children {
+  position: relative;
+  padding-left: 1rem;
+}
+
+.messages-container .children::before {
+  display: block;
+  content: '';
+  width: 1px;
+  background-color: $grey-on-grey;
+  height: calc(100% - 1rem);
+  position: absolute;
+}
+
+.summary-message {
+  margin-bottom: .5rem;
+}
+
+.children .summary-message {
+  position: relative;
+  margin-left: 1.5rem;
+}
+
+.children .summary-message::before {
+  display: block;
+  content: '';
+  height: 1px;
+  background-color: $grey-on-grey;
+  width: 1rem;
+  position: absolute;
+  left: -1.5rem;
+}
+
+.messages-container .children > .children {
+  padding-left: 2.5rem;
+}
+
+.messages-container .show-message {
+  width: 2rem;
+  min-width: 2rem;
+  height: 2rem;
+  min-height: 2rem;
+  border-radius: $admin-radius;
+  position: relative;
+  margin-bottom: .5rem;
+  margin-left: 2.5rem;
+}
+
+.messages-container .children .show-message {
+  margin-left: 4rem;
+}
+
+.messages-container .show-message svg {
+  max-height: 1.5rem;
+  max-width: 1.5rem;
+}
+
+.messages-container .show-message::before {
+  display: block;
+  content: '';
+  width: 1px;
+  background-color: $grey-on-grey;
+  height: 1rem;
+  position: absolute;
+  left: -1.5rem;
+  top: 0;
+}
+
+.messages-container .show-message::after {
+  display: block;
+  content: '';
+  height: 1px;
+  background-color: $grey-on-grey;
+  width: 1rem;
+  position: absolute;
+  left: -1.5rem;
+}
+
+.survey-summary-container .reminder .icon {
+  max-width: 1.5rem;
+  max-height: 1.5rem;
+  margin-right: 1rem;
+}
+
+.survey-summary-container .reminder .icon > svg {
+  overflow: visible;
+  max-width: 1.5rem;
+  max-height: 1.5rem;
+}
+
+.survey-summary-container .reminder svg * {
+  stroke: $grey-text;
+}
+
+.survey-summary-container {
+  margin-top: -1px;
+}
+
+.slat {
+  border: 1px solid $border-color;
+  border-radius: $admin-radius;
+}
+
+.slat + .slat {
+  margin-top: -1px;
+}
+
+.slat.disabled {
+  opacity: .6;
+}
+
+.slat.open {
+  margin: 1rem 0;
+}
+
+.slat.open:last-child {
+  margin-bottom: 0;
+}
+
+.slat:last-child {
+  border-bottom:0;
+}
+
+.slat-header {
+  display: flex;
+  padding: 1.5rem;
+  align-items: center;
+}
+
+.slat-header h4 {
+  font-weight: 400;
+  margin: 0 2rem 0 2rem;
+  width: 15rem;
+}
+
+.slat-header h4.success {
+  color: $green;
+}
+
+.slat-header .error {
+  color: $red;
+}
+
+.slat-header.toggle {
+  cursor: pointer;
+}
+
+.slat-header.toggle:hover {
+  background-color: $hover-background;
+}
+
+.slat-header p {
+  color: $grey-text;
+  margin: 0 2rem 0 0;
+}
+
+.slat-header p.info {
+  color: $blue-text;
+}
+
+.slat-header .chevron {
+  margin-left: auto;
+  transform-origin: center;
+}
+
+.slat-header .chevron.open{
+  transform: rotateZ(180deg);
+}
+
+.slat-header button:hover {
+  color: $black;
+}
+
+.slat-content {
+  padding: .75rem 1.5rem 1.5rem 3rem;
+}
+
+.slat-content ul, .slat-content ol {
+  margin: 0;
+  padding-left: 1.5rem;
+}
+
+.slat-content b {
+  font-weight: 600;
+}
+
+.slat-content .reminder > span {
+  margin-left: 2rem;
+}
+
+.slat-content .reminder .message {
+  margin: .5rem 0 1rem;
+  color: $grey-text;
+  align-items: center;
+}
+
+.slat-content .reminder .message svg {
+  margin-right: .5rem;
+  max-height: 1.8rem;
+  max-width: 1.8rem;
+}
+
+.slat-content .reminder .message svg * {
+  stroke: $black;
+  stroke-width: 1;
+}
+
+.slat-content .reminder span.alert {
+  color: $red;
+  font-style: italic;
+}
+
+.summary-message span.alert {
+  margin-left: .5rem;
+}
+
+.messages-container {
+  font-size: 1.3rem;
+}
+
+.message-group {
+  display: flex;
+  position: relative;
+}
+
+.message-card {
+  height: max-content;
+  border-radius: $border-radius;
+  border: $border;
+  background-color: $white;
+  max-width: 38rem;
+  margin-bottom: 2rem;
+}
+
+.message-minimized {
+  border-radius: $border-radius;
+  margin-bottom: 1rem;
+  width: 4rem;
+  height: 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: $darker-grey;
+  color: white;
+}
+
+.message-minimized .icon {
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+}
+
+ul .message-minimized {
+  width: 3.1rem;
+  height: 3.1rem;
+  margin: 0 .5rem 0 0;
+}
+
+.slat-content .support-need-container > div {
+  margin-right: 1rem;
+}
+
+ul .support-need-container > div {
+  display: inline-flex;
+}
+
+.support-need-container .message-minimized .icon {
+  margin-top: 0;
+  height: unset;
+  margin-right: 0;
+}
+
+.message-header {
+  padding: 1rem;
+  background-color: $darker-grey;
+  border-radius: 8px 8px 0 0;
+  margin: -1px;
+  height: 4rem;
+  display: flex;
+  align-items: center;
+  color: $white;
+  font-weight: 500;
+  line-height: 1.1;
+  cursor: initial;
+}
+
+.message-header .icon {
+  display: flex;
+  align-items: center;
+  margin-right: 2rem;
+}
+
+.message-header .icon > svg {
+  max-height: 1.8rem;
+  max-width: 1.8rem;
+  min-height: 1.8rem;
+  min-width: 1.8rem;
+}
+
+.message-header .icon > svg {
+  margin-right: 1rem;
+}
+
+.message-text {
+  white-space: break-spaces;
+  padding: 1rem;
+}
+
+.message-text .error {
+  color: $red;
+  font-style: italic;
+}
+
+.message-support-need {
+  display: flex;
+  align-items: center;
+  padding: .5rem 1rem 0 1rem;
+  background-color: $box-background;
+  border-top: 1px solid $border-color;
+  border-radius: 0 0 8px 8px;
+}
+
+.slat-content .support-need-toggle > svg {
+  margin-right: 0;
+}
+
+.message-support-need .support-provider {
+  font-weight: 600;
+}
+
+.summary-container .support-provider.block.alert, .summary-container .support-need.block.alert {
+  color: $red;
+  background-color: $light-red;
+  font-weight: 700;
+}
+
+.message-support-need .support-need.block {
+  cursor: initial;
+}
+
+.message-support-need .support-need.block:hover {
+  background-color: $background-blue;
+}
+
+.message-group .message-support-need .block {
+  padding: .5rem 1rem;
+  margin: 0 1rem 0 .5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.message-group .message-children {
+  margin-left: 3rem;
+  position: relative;
+}
+
+.message-group:not(.first)::before {
+  position:absolute;
+  display: block;
+  content: '';
+  height: 1px;
+  width: 1.5rem;
+  background-color:$blue-text;
+  color:$blue-text;
+  top: 2rem;
+  left: -1.5rem;
+}
+
+.message-group:first-child::before {
+  width: 3rem;
+  left: -3rem;
+}
+
+.message-children.line::before {
+  position: absolute;
+  display: block;
+  content: '';
+  top: 2rem;
+  width: 1px;
+  height: calc(100% - 4rem);
+  background-color: $blue-text;
+  left: -1.5rem;
+}
+
+.survey-summary-container .message-children.line .message-group:last-child::after {
+  position: absolute;
+  display: block;
+  content: '';
+  top: calc(2rem + 1px);
+  width: 1px;
+  height: calc(100% - 4rem);
+  background-color: $white;
+  left: -1.5rem;
+}
+
+.support-need-switch {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
+.support-need-switch svg {
+  margin-right: 1rem;
+}
+
+.support-need-switch svg * {
+  fill: $white;
+}
+
+.message-card .switch-label {
+  cursor: initial;
+}
+
+.slat-content .support-need-container .block {
+  padding: .5rem 1rem;
+}
+
+.slat-content .support-need-container .icon svg, .slat-content .support-need-container > div > .icon {
+  max-height: 1.8rem;
+  max-width: 1.8rem;
+  min-height: 1.8rem;
+  min-width: 1.8rem;
+}
+
+.slat-content .support-need-container > div > .icon {
+  margin-right: 1rem;
+  margin-top: .5rem;
+}
+
+.slat-content .support-provider.block {
+  margin: 0 0 0 .5rem;
+}
+
+ul.summary-container li {
+  margin-bottom: .5rem;
+}
+
+.support-need-container .topics {
+  width: 19rem;
+}
+
+.support-need-container .support-providers {
+  width: 10rem;
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.support-need-container .support-providers .text {
+  font-weight: 400;
+}
+
+.slat-content .support-providers-container {
+  background-color: $background-blue;
+  border-radius: $admin-radius;
+  padding: .5rem 1rem;
+  margin: .5rem 0 0;
+  flex-wrap: nowrap;
+  flex-direction: column;
+}
+
+.slat-content .support-providers-container .support-provider {
+  white-space: nowrap;
+}
+
+table.summary-container {
+  background-color: $light-grey;
+  border-radius: $admin-radius;
+}
+
+table.summary-container thead th {
+  background-color: $beige;
+}
+
+table.summary-container tr:nth-child(odd) {
+  background-color: $white;
+}
+
+table.summary-container td {
+  padding: 1rem;
+  vertical-align: middle;
+}
+
+table.summary-container th {
+  text-align: left;
+  padding: 1rem 2rem 1rem 1rem;
+  font-weight: 600;
+}
+
+table.summary-container th svg {
+  margin-right: 1rem;
+  vertical-align: middle;
+}
+
+table.summary-container .info {
+  color: $blue-text;
+  font-weight: 600;
+}
+
+table.summary-container .alert {
+  color: $red;
+  font-weight: 600;
+}
+
+table.summary-container .info svg, table.summary-container .alert svg {
+  vertical-align: middle;
+  margin-right: .5rem;
+}
+
+table.summary-container .topics {
+  font-weight: 500;
+  color: $blue-text;
+}
+
+table.summary-container .branches {
+  padding-bottom: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-self:center;
+}
+
+table.summary-container .branches .message-minimized {
+  display: inline-flex;
+  margin-right: 1rem;
+}
+
+table.recipient-overview td {
+  vertical-align: top;
+}
+
+table.recipient-overview td p {
+  margin: .5rem 0;
+}
+
+.modal-options button.override {
+  color: $red;
+  margin: 0 1.5rem;
+  border-radius: $admin-radius;
+  padding: .5rem 1rem;
+  border: 1px solid $red;
+  background-color: transparent;
+  font-weight: 500;
+}

@@ -1,5 +1,5 @@
 import {useIntl} from "react-intl";
-import React, {useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import '../scss/SurveyMessages.scss';
 import {shadeColor} from "../Formats";
 import {Editor, EditorState, ContentState} from 'draft-js';
@@ -11,15 +11,19 @@ import {ReactComponent as ReplyIcon} from "../svg/reply.svg";
 import {ReactComponent as SupportIcon} from "../svg/support.svg";
 import {ReactComponent as ErrorIcon} from "../svg/error.svg";
 import {ReactComponent as MessageIcon} from "../svg/message.svg";
+import {ReactComponent as ConfirmIcon} from "../svg/confirm.svg";
+import {ReactComponent as CancelIcon} from "../svg/cancel.svg";
 import {getBranchIconColor, getMessageIcon, Modal, Popover, Popup} from "../UIElements";
-import {useCodesData, useSurveyData} from "./SurveyView";
-import {setSupportNeedStatus} from "../DataFunctions";
-import {SupportNeedSelector} from "./SurveySupportNeeds";
+import {useCodesData, useSurveyData, useUserSurveyData} from "./SurveyView";
+import {changeBranchName, getConditionForBranchName, nextBranchName, setSupportNeedStatus} from "../DataFunctions";
+import {SupportNeedSelector, SupportProviderSelector} from "./SurveySupportNeeds";
+import {ReactComponent as ProviderIcon} from "../svg/provider.svg";
 
 export default function SurveyMessages() {
     const {surveyData} = useSurveyData()
-    const [messageContentOpen, setMessageContentOpen] = useState(true)
     const intl = useIntl()
+    const surveyFinished = surveyData.status === "FINISHED"
+    const branches = Object.keys(surveyData.config).filter(key => key.startsWith('branch') || key === 'other')
 
     return <>
         <h4>
@@ -29,33 +33,27 @@ export default function SurveyMessages() {
                     defaultMessage: 'Messages',
                 })}
         </h4>
-        <div className={"messages"}>
-            {messageContentOpen ? <>
-                <div className={"message-container has-steps"}>
-                    <div className={"message"}>
-                        <div className={"message-icon"} onClick={() => setMessageContentOpen(!messageContentOpen)}>
+        <div className={"messages-container"}>
+            <div className={"message-group first"}>
+                <div className={"message-card"}>
+                    <div className={"message-header"}>
+                        <div className={"icon"}>
                             <MessageIcon />
-                        </div>
-                        <div className={"message-content"}>
-                            <EditableContent text={surveyData.config.message} data={surveyData.config} keyValue={"message"} message={"firstMessage"}
-                                             depth={0}/>
+                            {intl.formatMessage({id:'survey.firstMessage',defaultMessage:'First message'})}
                         </div>
                     </div>
-                    <div className={"message-children"}>
-                        <GetMessages data={surveyData.config} depth={1} />
+                    <div className={"message-text"} disabled={surveyFinished}>
+                        <EditableContent text={surveyData.config.message} data={surveyData.config} keyValue={"message"} message={"firstMessage"}
+                                         depth={0}/>
                     </div>
+                </div>
+                <div className={branches.length > 0 ? "message-children line": "message-children"}>
+                    <GetMessages data={surveyData.config} depth={1} />
+                    {!surveyFinished &&
                     <MessageToolbar data={surveyData.config} depth={1}/>
+                    }
                 </div>
-                </> :
-                <div className={"message"}>
-                    <div className={"message-icon"} onClick={() => setMessageContentOpen(!messageContentOpen)}>
-                        <MessageIcon />
-                    </div>
-                    <div className={"show-message"} onClick={() => setMessageContentOpen(true)}>
-                        <ShowExtraIcon />
-                    </div>
-                </div>
-            }
+            </div>
         </div>
     </>
 }
@@ -65,107 +63,251 @@ function GetMessages(props) {
         {Object.keys(props.data).filter(key => key.startsWith('branch') || key === 'other').sort()
             .map( (keyValue, i) => {
                 if (props.data[keyValue].condition === ".*") {
-                    return <Message message={"replyMessage"} data={props.data} parentColor={props.parentColor} keyValue={keyValue} i={i} key={i} depth={props.depth} parent={props.parent} parentsParent={props.parentsParent} parentsParentsParent={props.parentsParentsParent}/>
+                    return <Message message={"replyMessage"} data={props.data} parentColor={props.parentColor} keyValue={keyValue} i={i} key={props.parent+keyValue} depth={props.depth} parent={props.parent} parentsParent={props.parentsParent} parentsParentsParent={props.parentsParentsParent}/>
                 }
                 switch (keyValue) {
                     case "other":
-                        return <Message message={"errorMessage"} data={props.data} parentColor={props.parentColor} keyValue={keyValue} i={i} key={i} depth={props.depth} parent={props.parent} parentsParent={props.parentsParent} parentsParentsParent={props.parentsParentsParent}/>
+                        return <Message message={"errorMessage"} data={props.data} parentColor={props.parentColor} keyValue={keyValue} i={i} key={props.parent+keyValue} depth={props.depth} parent={props.parent} parentsParent={props.parentsParent} parentsParentsParent={props.parentsParentsParent}/>
                     default:
-                        return <Message data={props.data} parentColor={props.parentColor} keyValue={keyValue} i={i} key={i} depth={props.depth} parent={props.parent} parentsParent={props.parentsParent} parentsParentsParent={props.parentsParentsParent}/>
+                        return <Message data={props.data} parentColor={props.parentColor} keyValue={keyValue} i={i} key={props.parent+keyValue} depth={props.depth} parent={props.parent} parentsParent={props.parentsParent} parentsParentsParent={props.parentsParentsParent}/>
                 }
             })}
     </>
 }
 
 function Message(props) {
-    const [messageContentOpen, setMessageContentOpen] = useState(true)
+    const intl = useIntl()
     let isBranch = props.keyValue.startsWith('branch')
     let icon = getMessageIcon(props, isBranch)
     let color = getBranchIconColor(props, isBranch)
+    const {surveyData} = useSurveyData()
+    const surveyFinished = surveyData.status === "FINISHED"
+    const branches = Object.keys(props.data[props.keyValue]).filter(key => key.startsWith('branch') || key === 'other')
+    let branchText = ""
+    if (props.keyValue === "other") {
+        branchText = intl.formatMessage({id: 'survey.message.other', defaultMessage: 'Error message'})
+    }
+    if (props.data.condition === ".*") {
+        branchText = intl.formatMessage({id: 'survey.message.reply', defaultMessage: 'Reply'})
+    }
 
     let childDoesntHaveReply
     let childBranches = Object.keys(props.data[props.keyValue]).filter(key => key.startsWith('branch'))
-   if (childBranches.length < 1) {
-       childDoesntHaveReply = true
-   } else {
-       const hasReply = childBranches.some(childBranch => props.data[props.keyValue][childBranch].condition === ".*")
-       childDoesntHaveReply = !hasReply
-   }
-    let messageContent
-    if (messageContentOpen) {
-        messageContent = <><div className={"message"}>
-            <div className={"message-icon"} onClick={() => setMessageContentOpen(!messageContentOpen)} style={{backgroundColor:color}}>{icon}</div>
-            <div className={"message-content"}>
-                <div>
-                    <EditableContent message={props.message} text={props.data[props.keyValue].message} data={props.data} keyValue={props.keyValue} depth={props.depth} parent={props.parent} parentsParent={props.parentsParent} parentsParentsParent={props.parentsParentsParent}/>
-                    <OptionsPopUp data={props.data} keyValue={props.keyValue} depth={props.depth} parent={props.parent} parentsParent={props.parentsParent} parentsParentsParent={props.parentsParentsParent}/>
+    if (childBranches.length < 1) {
+        childDoesntHaveReply = true
+    } else {
+        const hasReply = childBranches.some(childBranch => props.data[props.keyValue][childBranch].condition === ".*")
+        childDoesntHaveReply = !hasReply
+    }
+    const showToolbar = childDoesntHaveReply && !surveyFinished && isBranch && props.data[props.keyValue].condition !== ".*"
+
+    return <div className={"message-group"} key={props.i}>
+        <div className={"message-card"}>
+            <div className={"message-header"} style={{backgroundColor: color}}>
+                <div className={"icon"}>
+                    {isBranch && props.data[props.keyValue].condition !== '.*' ?
+                        <BranchEditor data={props.data} keyValue={props.keyValue} depth={props.depth} parent={props.parent}
+                                      parentsParent={props.parentsParent} parentsParentsParent={props.parentsParentsParent} /> :
+                        icon
+                    }
+                    {branchText}
                 </div>
-                <SupportNeedTools data={props.data} keyValue={props.keyValue} depth={props.depth} parent={props.parent} parentsParent={props.parentsParent} parentsParentsParent={props.parentsParentsParent}/>
             </div>
+            <div className={"message-text"} disabled={surveyFinished}>
+                <EditableContent message={props.message} text={props.data[props.keyValue].message} data={props.data}
+                                 keyValue={props.keyValue} depth={props.depth} parent={props.parent}
+                                 parentsParent={props.parentsParent} parentsParentsParent={props.parentsParentsParent}/>
+            </div>
+            <SupportNeedTools data={props.data} keyValue={props.keyValue} depth={props.depth} parent={props.parent}
+                              parentsParent={props.parentsParent} parentsParentsParent={props.parentsParentsParent}/>
         </div>
-        {
-            isBranch && props.data[props.keyValue].condition !== ".*" &&
-            <>
-                <div className={childDoesntHaveReply ? "message-children" : "message-children no-toolbar"}>
-                    <GetMessages data={props.data[props.keyValue]} parentColor={color} depth={props.depth + 1} parent={props.keyValue} parentsParent={props.parent} parentsParentsParent={props.parentsParent}/>
-                </div>
-                {childDoesntHaveReply &&
+        {branches.length > 0 ?
+            <div className={branches.length > 0 ? "message-children line" : "message-children"}>
+                <GetMessages data={props.data[props.keyValue]} parentColor={color} depth={props.depth + 1}
+                             parent={props.keyValue} parentsParent={props.parent}
+                             parentsParentsParent={props.parentsParent}/>
+                {showToolbar &&
                 <MessageToolbar data={props.data} keyValue={props.keyValue} parentColor={color} depth={props.depth + 1}
                                 parent={props.keyValue} parentsParent={props.parent}
                                 parentsParentsParent={props.parentsParent}/>
                 }
-            </>
+            </div> : showToolbar &&
+            <MessageToolbar data={props.data} keyValue={props.keyValue} parentColor={color} depth={props.depth + 1}
+                            parent={props.keyValue} parentsParent={props.parent}
+                            parentsParentsParent={props.parentsParent}/>
         }
-        </>
-    } else {
-        messageContent = <div className={"message"}>
-            <div className={"message-icon"} onClick={() => setMessageContentOpen(!messageContentOpen)} style={{backgroundColor:color}}>{icon}</div>
-            <div className={"show-message"} onClick={() => setMessageContentOpen(true)}>
-                <ShowExtraIcon />
-            </div>
-        </div>
+    </div>
+}
+
+function BranchEditor(props) {
+    const {surveyData, setSurveyData} = useSurveyData()
+    const originalBranchName = props.keyValue.slice(6)
+    const [branchName, setBranchName] = useState(originalBranchName)
+    const [showConfirm, setShowConfirm] = useState(false)
+    const branchNameError = branchName.length < 1 || branchNameIsNotUnique(surveyData.config)
+    const inputClass = branchNameError ? "error" : showConfirm ? "active" : ""
+
+    function branchNameIsNotUnique(data) {
+        const branches = Object.keys(data).filter(key => key.startsWith('branch'))
+        if (branches.some(branch => {
+            if (branchName !== originalBranchName) {
+                return branch === "branch" + branchName
+            }
+        })) {
+            return true
+        }
+        return branches.some(branch => branchNameIsNotUnique(data[branch]))
     }
 
-    return <div className={isBranch ? "message-container has-steps" : "message-container"} key={props.i}>
-        {messageContent}
-    </div>
+    const changeBranch = e => {
+        e.preventDefault()
+        const newBranch = "branch"+branchName
+        const newSurveyData = {...surveyData}
+        changeBranchName(newBranch, newSurveyData.config, props.depth, props.keyValue, props.parent, props.parentsParent, props.parentsParentsParent)
+        setSurveyData(newSurveyData)
+        setShowConfirm(false)
+    }
+
+    return <form className={"branch-editor"} onSubmit={branchNameError ? null : changeBranch}>
+        <input type={"text"}
+               title={branchNameError ? "Option taken": ""}
+               className={inputClass}
+               value={branchName}
+               onChange={e => {
+                   setBranchName(e.target.value)
+                   setShowConfirm(true)
+               }}
+        />
+        {showConfirm &&
+        <>
+            <button className={"cancel"} title={"cancel"} onClick={()=>{
+                setBranchName(originalBranchName)
+                setShowConfirm(false)
+            }}>
+                <CancelIcon />
+            </button>
+            {!branchNameError &&
+            <button className={"confirm"} type={"submit"} title={"confirm"}>
+                <ConfirmIcon />
+            </button>
+            }
+        </>
+        }
+    </form>
 }
 
 function SupportNeedTools(props) {
     const {surveyData, setSurveyData} = useSurveyData()
+    const {userSurveyData} = useUserSurveyData()
+    const surveyFinished = surveyData.status === "FINISHED"
+    const limitedEditing = surveyData.status === "IN PROGRESS" || surveyData.status === "FINISHED"
     const {codesData} = useCodesData()
     const intl = useIntl()
     const [showPopup, setShowPopup] = useState(false)
-    let hasSupportNeed = props.data[props.keyValue].hasOwnProperty('supportneed') && props.data[props.keyValue]["supportneed"]
-    let hasCategoryName = codesData.hasOwnProperty(props.data[props.keyValue].category)
+    const [showSupportNeedSelector, setShowSupportNeedSelector] = useState(false)
+    const [showSupportProviderSelector, setShowSupportProviderSelector] = useState(false)
+    const hasSupportNeed = props.data[props.keyValue].hasOwnProperty('supportneed') && props.data[props.keyValue]["supportneed"]
+    const hasCategoryName = codesData.hasOwnProperty(props.data[props.keyValue].category)
+    const categoryName = hasCategoryName && props.data[props.keyValue].category
+    const topicSupportProviders = userSurveyData.filter(user => user.meta.hasOwnProperty("category") && user.meta.category[props.data[props.keyValue].category])
+
+    let locale = (intl.locale === "es" || intl.locale === "it") ? "en" : intl.locale
 
     const toggleSupportNeed = props => {
         const newSurveyData = {...surveyData}
-        setSupportNeedStatus(hasSupportNeed, newSurveyData.config, props.depth, props.keyValue,  props.parent, props.parentsParent, props.parentsParentsParent)
+        setSupportNeedStatus(hasSupportNeed, newSurveyData.config, props.depth, props.keyValue, props.parent, props.parentsParent, props.parentsParentsParent)
         setSurveyData(newSurveyData)
     }
 
     const inputId =  props.parent ? props.keyValue +"-"+ props.depth.toString() + "-" + props.parent : props.keyValue +"-"+ props.depth.toString()
 
+    const supportNeedName = hasCategoryName ? codesData[props.data[props.keyValue].category][locale] :
+        intl.formatMessage({
+            id: 'survey.chooseSupportNeed',
+            defaultMessage: '+ Choose Support Topic',
+        })
+
     return <>
-        <div className={"support-need-tools"}>
+        <div className={"message-support-need"}>
+            <div className={"support-need-toggle"}>
             <SupportIcon/>
-            <input type={"checkbox"} onChange={()=>toggleSupportNeed(props)} className={"switch"} id={inputId} defaultChecked={hasSupportNeed}/>
-            <label htmlFor={inputId} className={"switch-label"} />
-            {hasSupportNeed &&
-                <div className={hasCategoryName ? "block" : "block not-assigned"} onClick={() => setShowPopup(true)}>
-                    {hasCategoryName ? codesData[props.data[props.keyValue].category][intl.locale] :
-                        intl.formatMessage({
-                                id: 'survey.chooseSupportNeed',
-                                defaultMessage: '+ Choose Support Need',
-                            })
+            {surveyFinished ?
+                <>
+                    <input disabled readOnly={true} type={"checkbox"} className={"switch"} id={inputId} defaultChecked={hasSupportNeed}/>
+                    <label htmlFor={inputId} className={"switch-label"} />
+                    {hasSupportNeed &&
+                    <>
+                        <button title={supportNeedName} className={hasCategoryName ? "block" : "block not-assigned"} disabled>
+                            {supportNeedName}
+                        </button>
+                    </>
                     }
-                </div>
+                </> :
+                <>
+                    <input type={"checkbox"} onChange={()=>toggleSupportNeed(props)} className={"switch"} id={inputId} defaultChecked={hasSupportNeed}/>
+                    <label htmlFor={inputId} className={"switch-label"} />
+                    {hasSupportNeed &&
+                    <>
+                    <button title={supportNeedName} className={hasCategoryName ? "block" : "block not-assigned"} onClick={() => {
+                        setShowSupportNeedSelector(true)
+                        setShowPopup(true)
+                    }}>
+                        {supportNeedName}
+                    </button>
+                    </>
+                    }
+                </>
+            }
+            </div>
+            {hasSupportNeed &&
+            <div className={"support-providers"}>
+                <ProviderIcon/>
+                {hasCategoryName ?
+                <button className={topicSupportProviders.length > 0 ? "block support-provider" : "block not-assigned"} onClick={() => {
+                    setShowSupportProviderSelector(true)
+                    setShowPopup(true)
+                }}>
+                    {topicSupportProviders.length > 0 ? topicSupportProviders.length :
+                        intl.formatMessage({
+                            id: 'survey.assign',
+                            defaultMessage: '+ Assign',
+                        })
+                    }
+                </button> :
+                    <p className={"placeholder"}>
+                        {intl.formatMessage({
+                            id: 'survey.supportNeeds.addTopicFirst',
+                            defaultMessage: 'Add topic first',
+                        })}
+                    </p>
+                }
+            </div>
+            }
+            {!limitedEditing &&
+            <DeleteMessage data={props.data} keyValue={props.keyValue} depth={props.depth}
+                           parent={props.parent}
+                           parentsParent={props.parentsParent}
+                           parentsParentsParent={props.parentsParentsParent} />
             }
         </div>
         {showPopup &&
-        <Popup closePopup={() => setShowPopup(false)}>
-            <SupportNeedSelector need={props} closePopup={() => setShowPopup(false)}/>
+        <Popup closePopup={() => {
+            setShowPopup(false)
+            setShowSupportNeedSelector(false)
+            setShowSupportProviderSelector(false)
+        }}>
+            {showSupportNeedSelector &&
+            <SupportNeedSelector need={props} closePopup={() => {
+                setShowPopup(false)
+                setShowSupportNeedSelector(false)
+            }} hideRemoveSupportNeed={true}/>
+            }
+            {showSupportProviderSelector &&
+            <SupportProviderSelector group={categoryName} hidePopup={()=> {
+                setShowPopup(false)
+                setShowSupportProviderSelector(false)
+            }}/>
+            }
         </Popup>
         }
     </>
@@ -174,6 +316,7 @@ function SupportNeedTools(props) {
 function EditableContent(props) {
     // TODO: check if code can be refactored, so that the nested level of the edited object is not done manually
     const {surveyData, setSurveyData} = useSurveyData()
+    const surveyFinished = surveyData.status === "FINISHED"
     const intl = useIntl()
     const [editorState, setEditorState] = useState(
         () => EditorState.createWithContent(ContentState.createFromText(props.text)),
@@ -230,7 +373,68 @@ function EditableContent(props) {
         setSurveyData(newSurveyData)
 
     }
-    return <Editor editorState={editorState} onChange={editorUpdate} placeholder={placeholderText} stripPastedStyles={true}/>
+    return <>{surveyFinished ?
+        <Editor editorState={editorState} readOnly={true} disabled placeholder={placeholderText} stripPastedStyles={true}/> :
+        <Editor editorState={editorState} onChange={editorUpdate} placeholder={placeholderText} stripPastedStyles={true}/>
+    }
+    </>
+}
+
+function DeleteMessage(props) {
+    const intl = useIntl()
+    const {surveyData, setSurveyData} = useSurveyData()
+    const [modalOpen, setModalOpen] = useState(false)
+    const deleteMessage = () => {
+        const newSurveyData = {...surveyData}
+        if (props.depth === 1) {
+            delete newSurveyData.config[props.keyValue]
+        }
+        if (props.depth === 2) {
+            delete newSurveyData.config[props.parent][props.keyValue]
+        }
+        if (props.depth === 3) {
+            delete newSurveyData.config[props.parentsParent][props.parent][props.keyValue]
+        }
+        if (props.depth === 4) {
+            delete newSurveyData.config[props.parentsParentsParent][props.parentsParent][props.parent][props.keyValue]
+        }
+        setSurveyData(newSurveyData)
+        setModalOpen(false)
+    }
+    return <>
+        <button className={"delete icon"} title={intl.formatMessage(
+            {
+                id: 'survey.message.deleteMessage',
+                defaultMessage: 'Delete Message',
+            })}
+             onClick={() => {
+            setModalOpen(true)
+        }}>
+            <DeleteIcon/>
+        </button>
+        {modalOpen &&
+        <Modal
+            header={intl.formatMessage(
+                {
+                    id: 'survey.message.delete.header',
+                    defaultMessage: "Are you sure you want to delete this step?",
+                })}
+            text={intl.formatMessage(
+                {
+                    id: 'survey.message.delete.text',
+                    defaultMessage: "This will delete chosen step and it's children. You can't undo this action.",
+                })}
+            confirmText={intl.formatMessage(
+                {
+                    id: 'survey.message.delete',
+                    defaultMessage: 'Delete',
+                })}
+            alert
+            closeModal={() => {setModalOpen(false)}}
+            confirmAction={() => deleteMessage()}
+        />
+        }
+    </>
 }
 
 function OptionsPopUp(props) {
@@ -310,212 +514,59 @@ function MessageToolbar(props) {
     const [toolbarOpen, setToolbarOpen] = useState(false)
     const {surveyData, setSurveyData} = useSurveyData()
     const intl = useIntl()
+    const refToolbar = useRef(null)
+    useEffect(()=>{
+        document.addEventListener("mousedown", handleClickOutside)
+        function handleClickOutside(event) {
+            if (refToolbar.current && !refToolbar.current.contains(event.target)) {
+                setToolbarOpen(false)
+            }
+            return () => {
+                document.removeEventListener("mousedown", handleClickOutside);
+            }
+        }
+    },[refToolbar, toolbarOpen])
+
     let color
     if (props.parentColor) {
         color = shadeColor(props.parentColor, -5)
     } else {
         color = "#BFBFBF"
     }
-    let nextBranch
+    let branches
     if (props.depth === 1) {
-        let branches = Object.keys(props.data).filter(key => key.startsWith('branch'))
-        if (branches.length > 0) {
-            let letters = branches.map(key => key.slice(6)).sort()
-            let lastKey = letters[letters.length - 1]
-            nextBranch = lastKey.substring(0, lastKey.length - 1)
-                + String.fromCharCode(lastKey.charCodeAt(lastKey.length - 1) + 1)
-        } else {
-            nextBranch = "A"
-        }
+        branches = Object.keys(props.data).filter(key => key.startsWith('branch'))
+    } else {
+        branches = Object.keys(props.data[props.keyValue]).filter(key => key.startsWith('branch'))
     }
-    if (props.depth === 2) {
-        let subBranches = Object.keys(props.data[props.keyValue]).filter(key => key.startsWith('branch'))
-        if (subBranches && subBranches.length > 0) {
-            let letters = subBranches.map(key => key.slice(6)).sort()
-            let lastKey = letters[letters.length - 1]
-            let nextNumber = parseInt(lastKey.slice(1), 10) + 1
-            let parentLetter = props.keyValue.slice(6)
-            nextBranch = parentLetter + nextNumber
-        } else {
-            let parentLetter = props.keyValue.slice(6)
-            nextBranch = parentLetter + 1
-        }
-    }
-    if (props.depth === 3) {
-        let subBranches = Object.keys(props.data[props.keyValue]).filter(key => key.startsWith('branch'))
-        if (subBranches && subBranches.length > 0) {
-            let letters = subBranches.map(key => key.slice(6)).sort()
-            let lastKey = letters[letters.length - 1]
-            let nextNumber = parseInt(lastKey.slice(1), 10) + 1
-            let parentLetter = props.parentsParent.slice(6)
-            nextBranch = parentLetter + nextNumber
-        } else {
-            let parentLetter = props.parentsParent.slice(6)
-            let parentNumber = props.parent.slice(7)
-            nextBranch = parentLetter + parentNumber + 1
-        }
-    }
-    if (props.depth === 4) {
-        let subBranches = Object.keys(props.data[props.keyValue]).filter(key => key.startsWith('branch'))
-        if (subBranches && subBranches.length > 0) {
-            let letters = subBranches.map(key => key.slice(6)).sort()
-            let lastKey = letters[letters.length - 1]
-            let nextNumber = parseInt(lastKey.slice(1), 10) + 1
-            let parentLetter = props.parentsParentsParent.slice(6)
-            nextBranch = parentLetter + nextNumber
-        } else {
-            let parentLetter = props.parentsParentsParent.slice(6)
-            let parentNumber = props.parent.slice(7)
-            nextBranch = parentLetter + parentNumber + 1
-        }
-    }
+    const nextBranch = nextBranchName(branches, props.keyValue)
 
-    const addBranch = () => {
+    color = getBranchIconColor(props.data, true, nextBranch)
+
+    const addBranch = (type) => {
         const newSurveyData = {...surveyData}
-        if (props.depth === 1) {
-            let branches = Object.keys(props.data).filter(key => key.startsWith('branch'))
-            if (branches.length > 0) {
-                let letters = branches.map(key => key.slice(6)).sort()
-                let lastKey = letters[letters.length - 1]
-                let nextKey = lastKey.substring(0, lastKey.length - 1)
-                    + String.fromCharCode(lastKey.charCodeAt(lastKey.length - 1) + 1)
-                newSurveyData.config["branch" + nextKey] = {
-                    condition: "^[" + nextKey.toLowerCase() + nextKey.toUpperCase() + "]\\b",
-                    message: ""
-                }
-            } else {
-                newSurveyData.config["branchA"] = {
-                    condition: "^[aA]\\b",
-                    message: ""
-                }
+        const condition = type === "reply" ? ".*" : getConditionForBranchName(nextBranch)
+        const branchType = type === "other" ? "other" : nextBranch
+        const objectContent = type === "other" ?
+            {
+                message: ""
+            } :
+            {
+                condition: condition,
+                message: ""
             }
+
+        if (props.depth === 1) {
+            newSurveyData.config[branchType] = objectContent
         }
         if (props.depth === 2) {
-            let subBranches = Object.keys(props.data[props.keyValue]).filter(key => key.startsWith('branch'))
-            if (subBranches && subBranches.length > 0) {
-                let letters = subBranches.map(key => key.slice(6)).sort()
-                let lastKey = letters[letters.length - 1]
-                let nextNumber = parseInt(lastKey.slice(1), 10) + 1
-                let parentLetter = props.keyValue.slice(6)
-                let nextKey = parentLetter + nextNumber
-                let parentCondition = parentLetter.toLowerCase() + parentLetter.toUpperCase()
-                newSurveyData.config[props.keyValue]["branch" + nextKey] = {
-                    condition: "^[" + parentCondition + "]" + nextNumber + "\\b",
-                    message: ""
-                }
-            } else {
-                let parentLetter = props.keyValue.slice(6)
-                let parentCondition = parentLetter.toLowerCase() + parentLetter.toUpperCase()
-                newSurveyData.config[props.keyValue]["branch" + parentLetter +"1"] = {
-                    condition: "^[" + parentCondition + "]1\\b",
-                    message: ""
-                }
-            }
+            newSurveyData.config[props.keyValue][branchType] = objectContent
         }
         if (props.depth === 3) {
-            let subBranches = Object.keys(props.data[props.keyValue]).filter(key => key.startsWith('branch'))
-            if (subBranches && subBranches.length > 0) {
-                let letters = subBranches.map(key => key.slice(6)).sort()
-                let lastKey = letters[letters.length - 1]
-                let nextNumber = parseInt(lastKey.slice(1), 10) + 1
-                let parentLetter = props.parentsParent.slice(6)
-                let nextKey = parentLetter + nextNumber
-                let parentCondition = parentLetter.toLowerCase() + parentLetter.toUpperCase()
-                newSurveyData.config[props.parentsParent][props.parent]["branch" + nextKey] = {
-                    condition: "^[" + parentCondition + "]" + nextNumber + "\\b",
-                    message: ""
-                }
-            } else {
-                let parentLetter = props.parentsParent.slice(6)
-                let parentCondition = parentLetter.toLowerCase() + parentLetter.toUpperCase()
-                let parentNumber = props.parent.slice(7)
-                newSurveyData.config[props.parentsParent][props.parent]["branch" + parentLetter + parentNumber +"1"] = {
-                    condition: "^[" + parentCondition + "]" + parentNumber + "1\\b",
-                    message: ""
-                }
-            }
+            newSurveyData.config[props.parentsParent][props.parent][branchType] = objectContent
         }
         if (props.depth === 4) {
-            let subBranches = Object.keys(props.data[props.keyValue]).filter(key => key.startsWith('branch'))
-            if (subBranches && subBranches.length > 0) {
-                let letters = subBranches.map(key => key.slice(6)).sort()
-                let lastKey = letters[letters.length - 1]
-                let nextNumber = parseInt(lastKey.slice(1), 10) + 1
-                let parentLetter = props.parentsParentsParent.slice(6)
-                let nextKey = parentLetter + nextNumber
-                let parentCondition = parentLetter.toLowerCase() + parentLetter.toUpperCase()
-                newSurveyData.config[props.parentsParentsParent][props.parentsParent][props.parent]["branch" + nextKey] = {
-                    condition: "^[" + parentCondition + "]" + nextNumber + "\\b",
-                    message: ""
-                }
-            } else {
-                let parentLetter = props.parentsParentsParent.slice(6)
-                let parentCondition = parentLetter.toLowerCase() + parentLetter.toUpperCase()
-                let parentNumber = props.parent.slice(7)
-                newSurveyData.config[props.parentsParentsParent][props.parentsParent][props.parent]["branch" + parentLetter + parentNumber +"1"] = {
-                    condition: "^[" + parentCondition + "]" + parentNumber + "1\\b",
-                    message: ""
-                }
-            }
-        }
-        setSurveyData(newSurveyData)
-    }
-
-    const addReply = () => {
-        const newSurveyData = {...surveyData}
-        if (props.depth === 1) {
-            newSurveyData.config["branchA"] = {
-                condition: ".*",
-                message: ""
-            }
-        }
-        if (props.depth === 2) {
-            let parentLetter = props.keyValue.slice(6)
-            newSurveyData.config[props.keyValue]["branch" + parentLetter +"1"] = {
-                condition: ".*",
-                message: ""
-            }
-        }
-        if (props.depth === 3) {
-            let parentLetter = props.parentsParent.slice(6)
-            let parentNumber = props.parent.slice(7)
-            newSurveyData.config[props.parentsParent][props.parent]["branch" + parentLetter + parentNumber +"1"] = {
-                condition: ".*",
-                message: ""
-            }
-        }
-        if (props.depth === 4) {
-            let parentLetter = props.parentsParentsParent.slice(6)
-            let parentNumber = props.parent.slice(7)
-            newSurveyData.config[props.parentsParentsParent][props.parentsParent][props.parent]["branch" + parentLetter + parentNumber +"1"] = {
-                condition: ".*",
-                message: ""
-            }
-        }
-        setSurveyData(newSurveyData)
-    }
-
-    const addOther = () => {
-        const newSurveyData = {...surveyData}
-        if (props.depth === 1) {
-            newSurveyData.config["other"] = {
-                message: ""
-            }
-        }
-        if (props.depth === 2) {
-            newSurveyData.config[props.keyValue]["other"] = {
-                message: ""
-            }
-        }
-        if (props.depth === 3) {
-            newSurveyData.config[props.parentsParent][props.parent]["other"] = {
-                message: ""
-            }
-        }
-        if (props.depth === 4) {
-            newSurveyData.config[props.parentsParentsParent][props.parentsParent][props.parent]["other"] = {
-                message: ""
-            }
+            newSurveyData.config[props.parentsParentsParent][props.parentsParent][props.parent][branchType] = objectContent
         }
         setSurveyData(newSurveyData)
     }
@@ -541,7 +592,7 @@ function MessageToolbar(props) {
         hasBranches = Object.keys(props.data[props.keyValue]).filter(key => key.startsWith('branch')).length > 0
     }
 
-    return <div className="message-toolbar">
+    return <div className="message-toolbar" ref={refToolbar}>
         {!toolbarOpen &&
         <button className={"add-step"} onClick={() => setToolbarOpen(true)}>
             +
@@ -550,45 +601,45 @@ function MessageToolbar(props) {
         {toolbarOpen &&
         <div className={"toolbar-option"}>
             {props.depth < 5 && !optionLimitFull &&
-            <button className={"option"} onClick={() => {
-                addBranch()
-                !hasOtherOption && addOther()
+            <button className={"option"} style={{backgroundColor: color}} onClick={() => {
+                addBranch("branch")
+                !hasOtherOption && addBranch("other")
             }}>
-                <div className={"icon"} style={{backgroundColor: color}}>{nextBranch}</div>
-                <div className={"text"}>{intl.formatMessage(
+                <span className={"icon"}>{nextBranch.slice(6)}</span>
+                {intl.formatMessage(
                     {
                         id: 'survey.message.option',
                         defaultMessage: 'Option',
-                    })}</div>
+                    })}
             </button>
             }
             {!hasOtherOption &&
-            <button className={"option"} onClick={() => addOther()}>
-                <div className={"icon"}><ErrorIcon /></div>
-                <div className={"text"}>{intl.formatMessage(
+            <button className={"option"} onClick={() => addBranch("other")}>
+                <span className={"icon"}><ErrorIcon /></span>
+                {intl.formatMessage(
                     {
                         id: 'survey.message.other',
                         defaultMessage: 'Error message',
-                    })}</div>
+                    })}
             </button>
             }
             {!hasOtherOption && !hasBranches &&
-            <button className={"option"} onClick={() => addReply()}>
-                <div className={"icon"}><ReplyIcon/></div>
-                <div className={"text"}>{intl.formatMessage(
+            <button className={"option"} onClick={() => addBranch("reply")}>
+                <span className={"icon"}><ReplyIcon/></span>
+                {intl.formatMessage(
                     {
                         id: 'survey.message.reply',
                         defaultMessage: 'Reply',
-                    })}</div>
+                    })}
             </button>
             }
-            <div onClick={() => setToolbarOpen(false)}>
+            <button className={"close"} onClick={() => setToolbarOpen(false)}>
                 {intl.formatMessage(
                     {
                         id: 'survey.message.close',
                         defaultMessage: 'Close',
                     })}
-            </div>
+            </button>
         </div>
         }
     </div>

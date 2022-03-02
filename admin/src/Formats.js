@@ -1,30 +1,36 @@
 export function formatDate(date) {
-    return date.replace(/-/g, '/') // Replaces dashes with a slash for the date to work in modern browsers
+    if (date) {
+        return date.replace(/-/g, '/') // Replaces dashes with a slash for the date to work in modern browsers
+    }
 }
 
 export function dateToServerFormat(date) {
     // TODO: check utc timezone handling
-    return date.getFullYear()+"-"
-        +("0" + (date.getMonth() + 1)).slice(-2)+"-"
-        +("0" + date.getDate()).slice(-2)+" "
-        +("0" + date.getHours()).slice(-2)+":"
-        +("0" + date.getMinutes()).slice(-2)+":"
-        +("0" + date.getSeconds()).slice(-2)
-        +(date.getTimezoneOffset > 0 ? "-" : "+")
-        +(("0" + (-date.getTimezoneOffset()/60)).slice(-2))
+    if (date) {
+        return date.getFullYear() + "-"
+            + ("0" + (date.getMonth() + 1)).slice(-2) + "-"
+            + ("0" + date.getDate()).slice(-2) + " "
+            + ("0" + date.getHours()).slice(-2) + ":"
+            + ("0" + date.getMinutes()).slice(-2) + ":"
+            + ("0" + date.getSeconds()).slice(-2)
+            + (date.getTimezoneOffset > 0 ? "-" : "+")
+            + (("0" + (-date.getTimezoneOffset() / 60)).slice(-2))
+    }
 }
 
 export function updateTimeToServerFormat(date) {
     // TODO: check utc timezone and milliseconds handling
-    return date.getFullYear()+"-"
-        +("0" + (date.getMonth() + 1)).slice(-2)+"-"
-        +("0" + date.getDate()).slice(-2)+" "
-        +("0" + date.getHours()).slice(-2)+":"
-        +("0" + date.getMinutes()).slice(-2)+":"
-        +("0" + date.getSeconds()).slice(-2)+"."
-        +date.getMilliseconds()
-        +(date.getTimezoneOffset > 0 ? "-" : "+")
-        +(("0" + (-date.getTimezoneOffset()/60)).slice(-2))
+    if (date) {
+        return date.getFullYear() + "-"
+            + ("0" + (date.getMonth() + 1)).slice(-2) + "-"
+            + ("0" + date.getDate()).slice(-2) + " "
+            + ("0" + date.getHours()).slice(-2) + ":"
+            + ("0" + date.getMinutes()).slice(-2) + ":"
+            + ("0" + date.getSeconds()).slice(-2) + "."
+            + date.getMilliseconds()
+            + (date.getTimezoneOffset > 0 ? "-" : "+")
+            + (("0" + (-date.getTimezoneOffset() / 60)).slice(-2))
+    }
 }
 
 export function shadeColor(color, percent) {

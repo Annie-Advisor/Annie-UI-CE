@@ -25,9 +25,11 @@ import {ReactComponent as MinimizeIcon} from "../svg/minimize.svg";
 import {ReactComponent as PathsIcon} from "../svg/paths.svg";
 import _ from "lodash"
 import {ReactComponent as SupportIcon} from "../svg/support.svg";
-import SurveySupportNeeds from "./SurveySupportNeeds";
+import SurveySupportNeeds, {SurveyCoordinators} from "./SurveySupportNeeds";
 import SurveyRecipients from "./SurveyRecipients";
+import SurveyResults from "./SurveyResults";
 import {ReactComponent as CloseIcon} from "../svg/close.svg";
+import SurveyFollowUp from "./SurveyFollowUp";
 registerLocale("fi", fi)
 
 const SurveyContext = React.createContext({
@@ -35,6 +37,7 @@ const SurveyContext = React.createContext({
         config: {},
         contacts: null,
         endtime: "",
+        followup: null,
         id: "",
         starttime: "",
         status: "DRAFT",
@@ -74,17 +77,20 @@ const ContactsContext = React.createContext({
     setContactsContext: () => {}
 })
 
+const CopiedUsersContext = React.createContext({
+    copiedUsersContext: {},
+    setCopiedUsersContext: () => {}
+})
+
 const newSurveyData = {
     id: "new",
     updated: "",
-    updatedby: "Annie",
+    updatedby: "",
     starttime: dateToServerFormat(new Date()),
     endtime: dateToServerFormat(new Date()),
+    followup: null,
     config: {
-        name: {
-            "en": "",
-            "fi": ""
-        },
+        title: "",
         message: ""
     },
     status: "DRAFT",
@@ -282,6 +288,22 @@ export function useContactsData() {
     return context
 }
 
+function CopiedUsersProvider({children}) {
+    const [copiedUsersData, setCopiedUsersData] = useState([])
+    const value = useMemo(() =>(
+        {copiedUsersData, setCopiedUsersData}
+    ), [copiedUsersData])
+    return <CopiedUsersContext.Provider value={value}>{children}</CopiedUsersContext.Provider>
+}
+
+export function useCopiedUsersData() {
+    const context = useContext(CopiedUsersContext)
+    if (context === undefined) {
+        throw new Error('useCopiedUsersData must be used within a CopiedUsersProvider')
+    }
+    return context
+}
+
 function ContextOfSurvey({surveyId, surveyContext, originalData, userContext, userSurveyContext, codesContext, originalUserSurveyData, contactsContext}) {
     return <SurveyProvider surveyContext={surveyContext}>
         <UserProvider userContext={userContext} surveyId={surveyId}>
@@ -290,15 +312,16 @@ function ContextOfSurvey({surveyId, surveyContext, originalData, userContext, us
                     <ContactsProvider contactsContext={contactsContext}>
                         <OriginalSurveyProvider originalSurveyContext={originalData}>
                             <OriginalUserSurveyProvider originalUserSurveyContext={originalUserSurveyData}>
-                                <SurveyHeader />
-                                <SurveyStatusBanner />
-                                <div className={"survey-view"}>
-                                    <div className={"survey-content"}>
-                                        <SurveyNavigation />
-                                        <SurveyContent/>
+                                <CopiedUsersProvider>
+                                    <SurveyHeader />
+                                    <SurveyStatusBanner />
+                                    <div className={"survey-view"}>
+                                        <div className={"survey-content"}>
+                                            <SurveyNavigation />
+                                            <SurveyContent/>
+                                        </div>
                                     </div>
-                                    <SurveyPreview />
-                                </div>
+                                </CopiedUsersProvider>
                             </OriginalUserSurveyProvider>
                         </OriginalSurveyProvider>
                     </ContactsProvider>
@@ -314,7 +337,7 @@ function SurveyStatusBanner() {
     const [status, setStatus] = useState(surveyData.status)
     const [showBanner, setShowBanner] = useState(true)
     let statusText
-    let statusShowBanner = status === "IN PROGRESS" || status === "SCHEDULED" || status === "FINISHED"
+    let statusShowBanner = status === "IN PROGRESS" || status === "SCHEDULED" || status === "FINISHED" || status === "ARCHIVED" || status === "DELETED"
     let renderBanner = showBanner && statusShowBanner
     let statusClass = "survey-status-banner"
 
@@ -340,6 +363,22 @@ function SurveyStatusBanner() {
             {
                 id: 'survey.statusBanner.finished',
                 defaultMessage: '🎉 This survey is finished. If you wish to edit it consider creating a new survey by duplicating this one.',
+            })
+    }
+    if (status === "ARCHIVED") {
+        statusClass = statusClass.concat(" archived")
+        statusText = intl.formatMessage(
+            {
+                id: 'survey.statusBanner.archived',
+                defaultMessage: '🗃 This survey has been archived. Editing is limited.',
+            })
+    }
+    if (status === "DELETED") {
+        statusClass = statusClass.concat(" archived")
+        statusText = intl.formatMessage(
+            {
+                id: 'survey.statusBanner.deleted',
+                defaultMessage: '🗑 This survey has been deleted.',
             })
     }
 
@@ -544,6 +583,24 @@ function SurveyNavigation() {
                             })}
                     </NavLink>
                 </li>
+                <li>
+                    <NavLink to={`${url}/follow-up`}>
+                        {intl.formatMessage(
+                            {
+                                id: 'survey.followUp',
+                                defaultMessage: 'Follow Up',
+                            })}
+                    </NavLink>
+                </li>
+                <li>
+                    <NavLink to={`${url}/results`}>
+                        {intl.formatMessage(
+                            {
+                                id: 'survey.navigation.results',
+                                defaultMessage: 'Results',
+                            })}
+                    </NavLink>
+                </li>
             </ul>
         </nav>
     </div>
@@ -568,6 +625,12 @@ function SurveyContent() {
             <Route path={`${path}/recipients`}>
                 <SurveyRecipients />
             </Route>
+            <Route path={`${path}/follow-up`}>
+                <SurveyFollowUp />
+            </Route>
+            <Route path={`${path}/results`}>
+                <SurveyResults />
+            </Route>
             <Route path={path}>
                 <Redirect to={`${url}/information`} />
             </Route>
@@ -578,17 +641,9 @@ function SurveyContent() {
 function SurveyInformation() {
     const intl = useIntl()
     const {surveyData, setSurveyData} = useSurveyData()
-    let surveyName
-    switch (intl.locale) {
-        case "en":
-            surveyName = surveyData.config.name.en
-            break
-        case "fi":
-            surveyName = surveyData.config.name.fi
-            break
-        default:
-            surveyName = surveyData.config.name.en
-    }
+    const limitedEditing = surveyData.status === "IN PROGRESS" || surveyData.status === "FINISHED"
+    const surveyFinished = surveyData.status === "FINISHED"
+    const surveyName = surveyData.config.title
     const [inputName, setInputName] = useState(surveyName)
     const [startDate, setStartDate] = useState(new Date(formatDate(surveyData.starttime)))
     const [endDate, setEndDate] = useState(new Date(formatDate(surveyData.endtime)))
@@ -641,7 +696,7 @@ function SurveyInformation() {
                onChange={e => {
                    setInputName(e.target.value)
                    const newSurveyData = {...surveyData}
-                   newSurveyData.config.name[intl.locale] = e.target.value
+                   newSurveyData.config.title = e.target.value
                    setSurveyData(newSurveyData)
                }}
                placeholder={intl.formatMessage(
@@ -658,19 +713,30 @@ function SurveyInformation() {
                             defaultMessage: 'Start Time',
                         })}
                 </label>
-                <DatePicker id={"survey-start"}
-                            selectsStart startDate={startDate} endDate={endDate}
-                            showTimeSelect timeIntervals={15} timeFormat={timeFormat} timeCaption={timeCaption}
-                            selected={startDate}
-                            dateFormat={dateFormat} locale={locale}
-                            placeholderText={datepickerPlaceholder}
-                            onChange={date => {
-                                setStartDate(date)
-                                const newSurveyData = {...surveyData}
-                                newSurveyData.starttime = dateToServerFormat(date)
-                                setSurveyData(newSurveyData)
-                            }}
-                />
+                {limitedEditing ?
+                    <DatePicker id={"survey-start"}
+                                selectsStart startDate={startDate} endDate={endDate}
+                                showTimeSelect timeIntervals={15} timeFormat={timeFormat} timeCaption={timeCaption}
+                                selected={startDate}
+                                dateFormat={dateFormat} locale={locale}
+                                placeholderText={datepickerPlaceholder}
+                                readOnly disabled
+                    />
+                    :
+                    <DatePicker id={"survey-start"}
+                                selectsStart startDate={startDate} endDate={endDate}
+                                showTimeSelect timeIntervals={15} timeFormat={timeFormat} timeCaption={timeCaption}
+                                selected={startDate}
+                                dateFormat={dateFormat} locale={locale}
+                                placeholderText={datepickerPlaceholder}
+                                onChange={date => {
+                                    setStartDate(date)
+                                    const newSurveyData = {...surveyData}
+                                    newSurveyData.starttime = dateToServerFormat(date)
+                                    setSurveyData(newSurveyData)
+                                }}
+                    />
+                }
             </div>
             <div>
                 <label htmlFor={"survey-end"}>
@@ -680,26 +746,41 @@ function SurveyInformation() {
                             defaultMessage: 'End Time',
                         })}
                 </label>
-                <DatePicker id={"survey-end"}
-                            selectsEnd startDate={startDate} endDate={endDate} minDate={startDate}
-                            showTimeSelect timeIntervals={15} timeFormat={timeFormat} timeCaption={timeCaption}
-                            selected={endDate}
-                            dateFormat={dateFormat} locale={locale}
-                            placeholderText={datepickerPlaceholder}
-                            onChange={date => {
-                                setEndDate(date)
-                                const newSurveyData = {...surveyData}
-                                newSurveyData.endtime = dateToServerFormat(date)
-                                setSurveyData(newSurveyData)
-                            }}
-                />
+                {surveyFinished ?
+                    <DatePicker id={"survey-end"}
+                                selectsEnd startDate={startDate} endDate={endDate} minDate={startDate}
+                                showTimeSelect timeIntervals={15} timeFormat={timeFormat} timeCaption={timeCaption}
+                                selected={endDate}
+                                dateFormat={dateFormat} locale={locale}
+                                placeholderText={datepickerPlaceholder}
+                                readOnly disabled
+                    />
+                    :
+                    <DatePicker id={"survey-end"}
+                                selectsEnd startDate={startDate} endDate={endDate} minDate={startDate}
+                                showTimeSelect timeIntervals={15} timeFormat={timeFormat} timeCaption={timeCaption}
+                                selected={endDate}
+                                dateFormat={dateFormat} locale={locale}
+                                placeholderText={datepickerPlaceholder}
+                                onChange={date => {
+                                    setEndDate(date)
+                                    const newSurveyData = {...surveyData}
+                                    newSurveyData.endtime = dateToServerFormat(date)
+                                    setSurveyData(newSurveyData)
+                                }}
+                    />
+                }
             </div>
+        </div>
+        <div className={"sub-group"}>
+            <SurveyCoordinators />
         </div>
     </>
 }
 
 function SurveyReminders() {
     const {surveyData, setSurveyData} = useSurveyData()
+    const surveyFinished = surveyData.status === "FINISHED"
     const intl = useIntl()
     let reminders
     if (surveyData.config.hasOwnProperty('reminders')) {
@@ -750,13 +831,23 @@ function SurveyReminders() {
                     </div>
                 </div>
             })}
-            <button className={"add-new-reminder add-new-button"} onClick={addReminder}>
-                {intl.formatMessage(
-                    {
-                        id: 'survey.reminders.addReminder',
-                        defaultMessage: '+ Add reminder',
-                    })}
-            </button>
+            {surveyFinished ?
+                <button className={"add-new-reminder add-new-button"} disabled>
+                    {intl.formatMessage(
+                        {
+                            id: 'survey.reminders.addReminder',
+                            defaultMessage: '+ Add reminder',
+                        })}
+                </button>
+                :
+                <button className={"add-new-reminder add-new-button"} onClick={addReminder}>
+                    {intl.formatMessage(
+                        {
+                            id: 'survey.reminders.addReminder',
+                            defaultMessage: '+ Add reminder',
+                        })}
+                </button>
+            }
         </div>
     </>
 }
@@ -886,35 +977,6 @@ function SurveySkeleton() {
                         <div>
                             <Skeleton width={40} height={20}/>
                             <Skeleton height={55} noMargin={true} classText={"input"}/>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div className={"survey-preview"}>
-                <div className={"preview-header"}>
-                    <Skeleton width={70} height={20} noMargin={true}/>
-                </div>
-                <div className={"messages"}>
-                    <div className={"message-container has-steps"}>
-                        <Skeleton width={40} height={40} noMargin={true} classText={"message"}/>
-                        <div className={"message-children"}>
-                            <div className={"message-container has-steps"}>
-                                <Skeleton width={40} height={40} noMargin={true} classText={"message"}/>
-                                <div className={"message-children"}>
-                                    <div className={"message-container has-steps"}>
-                                        <Skeleton width={40} height={40} noMargin={true} classText={"message"}/>
-                                    </div>
-                                    <div className={"message-container has-steps"}>
-                                        <Skeleton width={40} height={40} noMargin={true} classText={"message"}/>
-                                    </div>
-                                    <div className={"message-container"}>
-                                        <Skeleton width={40} height={40} noMargin={true} classText={"message"}/>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className={"message-container"}>
-                                <Skeleton width={40} height={40} noMargin={true} classText={"message"}/>
-                            </div>
                         </div>
                     </div>
                 </div>

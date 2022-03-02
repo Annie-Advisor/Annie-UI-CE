@@ -8,6 +8,7 @@ import {ReactComponent as ErrorIcon} from "./svg/error.svg";
 import {ReactComponent as SuccessIcon} from "./svg/success.svg";
 import {ReactComponent as FailIcon} from "./svg/fail.svg";
 import React, {useEffect, useRef, useState} from "react";
+import {ReactComponent as Alert} from "./svg/alert.svg";
 
 export function Skeleton( {height, width, circle, inline, noMargin, classText} ) {
     let className = "skeleton"
@@ -23,12 +24,9 @@ export function Skeleton( {height, width, circle, inline, noMargin, classText} )
 
 export function StatusText({survey}) {
     const intl = useIntl()
-    let startTime = new Date(formatDate(survey.starttime))
-    let endTime = new Date(formatDate(survey.endtime))
-    let currentTime = new Date()
     let status
     let statusClass
-    if (startTime > currentTime) {
+    if (survey.status === "SCHEDULED") {
         status = intl.formatMessage(
             {
                 id: 'main.surveys.status.scheduled',
@@ -37,7 +35,7 @@ export function StatusText({survey}) {
         )
         statusClass = "scheduled"
     }
-    if (startTime <= currentTime && endTime > currentTime) {
+    if (survey.status === "IN PROGRESS") {
         status = intl.formatMessage(
             {
                 id: 'main.surveys.status.inProgress',
@@ -46,7 +44,7 @@ export function StatusText({survey}) {
         )
         statusClass = "in-progress"
     }
-    if (endTime <= currentTime) {
+    if (survey.status === "FINISHED") {
         status = intl.formatMessage(
             {
                 id: 'main.surveys.status.finished',
@@ -60,6 +58,24 @@ export function StatusText({survey}) {
             {
                 id: 'main.surveys.status.draft',
                 defaultMessage: 'Draft',
+            }
+        )
+        statusClass = "draft"
+    }
+    if (survey.status === "ARCHIVED") {
+        status = intl.formatMessage(
+            {
+                id: 'main.surveys.status.archived',
+                defaultMessage: 'Archived',
+            }
+        )
+        statusClass = "draft"
+    }
+    if (survey.status === "DELETED") {
+        status = intl.formatMessage(
+            {
+                id: 'main.surveys.status.deleted',
+                defaultMessage: 'Deleted',
             }
         )
         statusClass = "draft"
@@ -120,7 +136,7 @@ export function Popup({closePopup, children}) {
 
 export function Modal(props) {
     const intl = useIntl()
-    return <div className={"modal-container"}>
+    return <div className={props.scrollContent ? "modal-container scrollable" : "modal-container"}>
         <div className={"close-modal"} onClick={props.closeModal}/>
         <div className={"modal"}>
             <div className={"close-toggle-container"}>
@@ -132,8 +148,18 @@ export function Modal(props) {
             {props.text &&
             <p>{props.text}</p>
             }
-            {props.children}
+            {props.scrollContent &&
+                <div className={"scroll-content"}>
+                    {props.children}
+                </div>
+            }
             <div className={"modal-options"}>
+                {props.confirmDisabled && props.disabledText &&
+                    <p className={"alert"}>
+                        <Alert />
+                        {props.disabledText}
+                    </p>
+                }
                 {props.discardText &&
                 <button onClick={props.discardAction} className={"discard alert"}>
                     {props.discardText}
@@ -146,15 +172,26 @@ export function Modal(props) {
                         defaultMessage: 'Cancel',
                     })}
                 </button>
-                <button onClick={props.confirmAction} className={props.alert ? "alert confirm" : "confirm"}>
-                    {props.confirmText}
-                </button>
+                {props.confirmDisabled ?
+                    <button disabled className={props.alert ? "alert confirm" : "confirm"}
+                            title={intl.formatMessage(
+                        {
+                            id: 'modal.checkFields',
+                            defaultMessage: 'Check invalid fields',
+                        })}>
+                        {props.confirmText}
+                    </button>
+                    :
+                    <button onClick={props.confirmAction} className={props.alert ? "alert confirm" : "confirm"}>
+                        {props.confirmText}
+                    </button>
+                }
             </div>
         </div>
     </div>
 }
 
-export function getMessageIcon(props, isBranch) {
+export function getMessageIcon(props, isBranch, branch) {
     if (props.hasOwnProperty('keyValue')) {
         if ((isBranch && props.condition === ".*") || (props.hasOwnProperty('data') && props.data[props.keyValue].condition === ".*")) {
             return <ReplyIcon/>
@@ -165,15 +202,25 @@ export function getMessageIcon(props, isBranch) {
         } else {
             return props.keyValue
         }
+    } else if (branch) {
+        if (isBranch && props.condition === ".*") {
+            return <ReplyIcon/>
+        } else if (isBranch) {
+            return branch.slice(6)
+        } else if (branch === 'other') {
+            return <ErrorIcon/>
+        } else {
+            return branch
+        }
     }
     return '?'
 }
 
-export function getBranchIconColor(props, isBranch) {
+export function getBranchIconColor(props, isBranch, branch) {
     if (isBranch && props.parentColor) {
         return shadeColor(props.parentColor, -props.i*10)
-    } else if (isBranch) {
-        switch (props.keyValue.charAt(6)) {
+    } else if (isBranch && (props.hasOwnProperty('keyValue') || branch)) {
+        switch (props.hasOwnProperty('keyValue') ? props.keyValue.charAt(6) : branch.charAt(6)) {
             case "A":
                 return "#8E99E4"
             case "B":
@@ -226,11 +273,17 @@ export function Toast({show, text, status, dismiss, hideToast}) {
         className = className.concat(' alert')
         icon = <FailIcon/>
     }
-    if (!dismiss) {
-        setTimeout(()=> {
-            disappear()
+
+    useEffect(()=> {
+        let timeOutDisappear = setTimeout(()=> {
+            if (!dismiss) {
+                disappear()
+            }
         }, 5000)
-    }
+
+        return () => {clearTimeout(timeOutDisappear)}
+    },[])
+
     function disappear() {
         /*className = className.concat(' disappear')
         setTimeout(()=> {
@@ -238,6 +291,7 @@ export function Toast({show, text, status, dismiss, hideToast}) {
         }, 300)*/
         hideToast()
     }
+
     return <>
         {show &&
         <div className={className}>

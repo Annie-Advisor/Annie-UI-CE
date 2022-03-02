@@ -1,8 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="16.828" height="16" viewBox="0 0 16.828 16">
   <g id="Group_284" data-name="Group 284" transform="translate(-70.586 -75.5)">
-    <path id="Path_160" data-name="Path 160" d="M72,80l3.5-3.5L79,80" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-    <path id="Path_161" data-name="Path 161" d="M86,87l-3.5,3.5L79,87" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-    <line id="Line_46" data-name="Line 46" y2="7" transform="translate(75.5 77)" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-    <line id="Line_47" data-name="Line 47" y2="7" transform="translate(82.5 83)" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+    <g class="asc">
+      <path id="Path_160" data-name="Path 160" d="M72,80l3.5-3.5L79,80" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+      <line id="Line_46" data-name="Line 46" y2="7" transform="translate(75.5 77)" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+    </g>
+    <g class="desc">
+      <path id="Path_161" data-name="Path 161" d="M86,87l-3.5,3.5L79,87" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+      <line id="Line_47" data-name="Line 47" y2="7" transform="translate(82.5 83)" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+    </g>
   </g>
 </svg>

@@ -1,7 +1,8 @@
 @import './variables.scss';
 
 .sidebar .locale-container {
-  padding: 4rem;
+  padding: 4rem 3rem;
+  margin-top: auto;
 }
 
 .locale-switcher {
@@ -33,12 +34,4 @@
   cursor: initial;
   margin: -1px;
   font-weight: 600;
-}
-
-.locale-switcher .active + * {
-  margin-left: -.5rem;
-}
-
-.locale-switcher * + .active {
-  margin-left: -.5rem;
 }

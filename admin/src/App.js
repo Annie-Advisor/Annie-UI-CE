@@ -1,4 +1,4 @@
-import React, {useMemo, useState} from "react"
+import React, {useContext, useMemo, useState} from "react"
 import './scss/App.scss'
 import {
     QueryClient,
@@ -9,7 +9,7 @@ import {
 } from "react-router-dom"
 import Content from "./Content"
 import LocaleWrapper from "./LocaleContext"
-import {AuthCheck} from "./api/APISurvey";
+import {AuthCheck, GetUser} from "./api/APISurvey";
 import {ReactComponent as CloudLogo} from "./svg/logo-green.svg";
 
 export const queryClient = new QueryClient()
@@ -25,6 +25,35 @@ function AuthProvider({children, authContext}) {
         {authData, setAuthData}
     ), [authData])
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+}
+
+export function useAuthData() {
+    const context = useContext(AuthContext)
+    if (context === undefined) {
+        throw new Error('useAuthData must be used within an AuthProvider')
+    }
+    return context
+}
+
+const CurrentUserContext = React.createContext({
+    currentUserContext: {},
+    setCurrentUserContext: () => {}
+})
+
+function CurrentUserProvider({children, userContext}) {
+    const [currentUserData, setCurrentUserData] = useState(userContext)
+    const value = useMemo(() =>(
+        {currentUserData, setCurrentUserData}
+    ), [currentUserData])
+    return <CurrentUserContext.Provider value={value}>{children}</CurrentUserContext.Provider>
+}
+
+export function useCurrentUserData() {
+    const context = useContext(CurrentUserContext)
+    if (context === undefined) {
+        throw new Error('useCurrentUserData must be used within an CurrentUserProvider')
+    }
+    return context
 }
 
 function App() {
@@ -62,14 +91,18 @@ function Auth() {
 }
 
 function AuthSuccess({authContext}) {
-    return <AuthProvider authContext={authContext}>
-        <LocaleWrapper>
-            <Router basename={"/admin"}>
-                <div className={"app"}>
-                    <Content />
-                </div>
-            </Router>
-        </LocaleWrapper>
+    const getUser = GetUser(authContext.uid)
+    return getUser.status === "loading" ? <Loading /> :
+        <AuthProvider authContext={authContext}>
+            <CurrentUserProvider userContext={getUser.data[0]}>
+                <LocaleWrapper>
+                    <Router basename={"/admin"}>
+                        <div className={"app"}>
+                            <Content />
+                        </div>
+                    </Router>
+                </LocaleWrapper>
+            </CurrentUserProvider>
     </AuthProvider>
 }
 

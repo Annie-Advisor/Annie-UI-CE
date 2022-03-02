@@ -1,0 +1,58 @@
+@import './variables.scss';
+
+.survey-follow-up input[type=text] {
+  font-size: inherit;
+  padding: 1rem 4rem 1rem 2rem;
+  width: unset;
+  margin-top: 2rem;
+}
+
+.survey-follow-up .surveys-container {
+  max-height: 30rem;
+  overflow-y: auto;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 1rem;
+  background-color: $white;
+  margin: 1rem 0 3rem;
+  display: block;
+}
+
+.survey-follow-up .surveys-container p {
+  margin: 0;
+}
+
+.survey-follow-up .surveys-container .survey-title {
+  cursor: pointer;
+}
+
+.survey-follow-up .surveys-container .survey-title.active {
+  font-weight: 600;
+  color: $blue-text;
+}
+
+.survey-follow-up .surveys-container .survey-title:hover {
+  background-color: $hover-background;
+}
+
+.survey-follow-up .follow-up-container {
+  display: flex;
+}
+
+.survey-follow-up table {
+  text-align: left;
+}
+
+.survey-follow-up table th {
+  padding-right: 2rem;
+  font-weight: 600;
+  vertical-align: top;
+}
+
+h4.flex {
+  display: flex;
+}
+.survey-follow-up h4 .empty-list {
+  margin-left: auto;
+  font-weight: 400;
+}

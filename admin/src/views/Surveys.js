@@ -1,4 +1,11 @@
-import {GetSurveys, GetUserBySurvey, PostSurveyWithId, PostUsersToAnnieUserSurvey} from "../api/APISurvey"
+import {
+    archiveSurveyWithId,
+    GetSurveys, GetUser,
+    GetUserBySurvey,
+    PostSurveyWithId,
+    PostUsersToAnnieUserSurvey,
+    UpdateSurveyWithId
+} from "../api/APISurvey"
 import "../scss/Surveys.scss"
 import {useIntl} from "react-intl"
 import {formatDate, updateTimeToServerFormat} from "../Formats"
@@ -10,12 +17,39 @@ import {Link} from "react-router-dom";
 import React, {useEffect, useState} from "react";
 import {ReactComponent as DuplicateIcon} from "../svg/duplicate.svg";
 import {ReactComponent as SortOrderIcon} from "../svg/order.svg";
+import {ReactComponent as ArchiveIcon} from "../svg/archive.svg";
+import {ReactComponent as DeleteIcon} from "../svg/delete-s.svg";
 import {ReactComponent as Chevron} from "../svg/chevron.svg";
-import {queryClient} from "../App";
+import {queryClient, useAuthData, useCurrentUserData} from "../App";
 import _ from "lodash"
 
 export default function Surveys() {
-    const { status, data, error, isFetching, refetch } = GetSurveys()
+    const showStatusFromStorage = localStorage.getItem("showStatus")
+    const [showStatus, setShowStatus] = useState(showStatusFromStorage ? showStatusFromStorage : "all")
+    let showStatusForAPI
+    switch (showStatus) {
+        case "scheduled":
+            showStatusForAPI = "SCHEDULED"
+            break
+        case "finished":
+            showStatusForAPI = "FINISHED"
+            break
+        case "inProgress":
+            showStatusForAPI = "IN PROGRESS"
+            break
+        case "archived":
+            showStatusForAPI = "ARCHIVED"
+            break
+        case "draft":
+            showStatusForAPI = "DRAFT"
+            break
+        default:
+            showStatusForAPI = null
+    }
+    const { status, data, error, isFetching, refetch } = GetSurveys(showStatusForAPI)
+    useEffect(()=>{
+        refetch()
+    },[showStatusForAPI])
     const intl = useIntl()
     const sortMethodFromStorage = localStorage.getItem("sortMethod")
     const sortDirectionFromStorage = localStorage.getItem("sortDirection")
@@ -24,14 +58,13 @@ export default function Surveys() {
     const [sortDirection, setSortDirection] = useState(sortDirectionFromStorage ? JSON.parse(sortDirectionFromStorage) : false)
     const [searchText, setSearchText] = useState("")
     const [groupingSpan, setGroupingSpan] = useState(groupingSpanFromStorage ? groupingSpanFromStorage : "month")
-    let searchData
-    let searchGroups
+    let searchData, searchGroups
     if (status === 'success') {
-        searchData = data.filter(survey => survey.config && survey.config.name[intl.locale].toLowerCase().includes(searchText.toLowerCase()))
+        searchData = data.filter(survey => survey.config && survey.config.hasOwnProperty("title") && survey.config.title.toLowerCase().includes(searchText.toLowerCase()))
         if (sortMethod === "alphabetical") {
             sortDirection ?
-            searchData.sort((a, b) => b.config.name[intl.locale].localeCompare(a.config.name[intl.locale])) :
-                searchData.sort((a, b) => a.config.name[intl.locale].localeCompare(b.config.name[intl.locale]))
+            searchData.sort((a, b) => b.config.title.localeCompare(a.config.title)) :
+                searchData.sort((a, b) => a.config.title.localeCompare(b.config.title))
         }
         if (sortMethod === "updated") {
             sortDirection ?
@@ -49,16 +82,16 @@ export default function Surveys() {
                 searchData.sort((a, b) => a.endtime.localeCompare(b.endtime))
         }
         if (groupingSpan === "day" && sortMethod !== "alphabetical") {
-            searchGroups = _.groupBy(searchData, e => e.updated.slice(0,10))
+            searchGroups = _.groupBy(searchData, e => e[sortMethod].slice(0,10))
         }
         if (groupingSpan === "month" && sortMethod !== "alphabetical") {
-            searchGroups = _.groupBy(searchData, e => e.updated.slice(0,7))
+            searchGroups = _.groupBy(searchData, e => e[sortMethod].slice(0,7))
         }
         if (groupingSpan === "year" && sortMethod !== "alphabetical") {
-            searchGroups = _.groupBy(searchData, e => e.updated.slice(0,4))
+            searchGroups = _.groupBy(searchData, e => e[sortMethod].slice(0,4))
         }
         if (sortMethod === "alphabetical") {
-            searchGroups = _.groupBy(searchData, e => e.config.name[intl.locale])
+            searchGroups = _.groupBy(searchData, e => e.config.title)
         }
     }
 
@@ -81,112 +114,226 @@ export default function Surveys() {
                     }
                 )}
             </Link>
-            <div className={"search-sort-surveys"}>
-                <p>{intl.formatMessage(
-                    {
-                        id: 'main.surveys.sort',
-                        defaultMessage: 'Sort by',
-                    })}
-                </p>
-                <select value={sortMethod} onChange={e => {
-                    setSortMethod(e.target.value)
-                    localStorage.setItem("sortMethod", e.target.value)
-                }}>
-                    <option value={"updated"}>{intl.formatMessage(
-                        {
-                            id: 'main.surveys.sort.updated',
-                            defaultMessage: 'Updated',
-                        }
-                    )}</option>
-                    <option value={"alphabetical"}>{intl.formatMessage(
-                        {
-                            id: 'main.surveys.sort.alphabetical',
-                            defaultMessage: 'Alphabetical',
-                        }
-                    )}</option>
-                    <option value={"starttime"}>{intl.formatMessage(
-                        {
-                            id: 'main.surveys.sort.starttime',
-                            defaultMessage: 'Start Time',
-                        }
-                    )}</option>
-                    <option value={"endtime"}>{intl.formatMessage(
-                        {
-                            id: 'main.surveys.sort.endtime',
-                            defaultMessage: 'End Time',
-                        }
-                    )}</option>
-                </select>
-                <div className={"sort-order"} onClick={()=> {
-                    setSortDirection(!sortDirection)
-                    localStorage.setItem("sortDirection", JSON.stringify(!sortDirection))
-                }}>
-                    <SortOrderIcon />
+            <div className={"surveys-layout"}>
+                <div className={"surveys-sidebar"}>
+                    <div className={"survey-sidebar-container"}>
+                        <div className={"search-sort-surveys"}>
+                            <input type={"text"} className={"search"} value={searchText}
+                                   onChange={e => {
+                                       setSearchText(e.target.value)
+                                   }}
+                                   placeholder={intl.formatMessage(
+                                       {
+                                           id: 'main.surveys.search.placeholder',
+                                           defaultMessage: 'Search for survey',
+                                       })}/>
+                        </div>
+                        <form onChange={e => {
+                            localStorage.setItem("showStatus", e.target.value)
+                            setShowStatus(e.target.value)
+                        }}>
+                            <fieldset className={"radio-group"}>
+                                <legend>
+                                    {intl.formatMessage(
+                                        {
+                                            id: 'main.surveys.showByStatus',
+                                            defaultMessage: 'Show by Status',
+                                        })}
+                                </legend>
+                                <div>
+                                    <input type="radio" id="all-surveys" name="show-by-status" value={"all"} defaultChecked={showStatus === "all"}/>
+                                    <label htmlFor="all-surveys">
+                                        {intl.formatMessage(
+                                            {
+                                                id: 'main.surveys.status.all',
+                                                defaultMessage: 'All',
+                                            })}
+                                    </label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="draft-surveys" name="show-by-status" value={"draft"} defaultChecked={showStatus === "draft"}/>
+                                    <label htmlFor="draft-surveys">
+                                        {intl.formatMessage(
+                                            {
+                                                id: 'main.surveys.status.draft',
+                                                defaultMessage: 'Draft',
+                                            })}
+                                    </label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="scheduled-surveys" name="show-by-status" value={"scheduled"} defaultChecked={showStatus === "scheduled"}/>
+                                    <label htmlFor="scheduled-surveys">
+                                        {intl.formatMessage(
+                                        {
+                                            id: 'main.surveys.status.scheduled',
+                                            defaultMessage: 'Scheduled',
+                                        })}
+                                    </label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="in-progress-surveys" name="show-by-status" value={"inProgress"} defaultChecked={showStatus === "inProgress"}/>
+                                    <label htmlFor="in-progress-surveys">
+                                        {intl.formatMessage(
+                                            {
+                                                id: 'main.surveys.status.inProgress',
+                                                defaultMessage: 'In Progress',
+                                            })}
+                                    </label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="finished-surveys" name="show-by-status" value={"finished"} defaultChecked={showStatus === "finished"}/>
+                                    <label htmlFor="finished-surveys">
+                                        {intl.formatMessage(
+                                            {
+                                                id: 'main.surveys.status.finished',
+                                                defaultMessage: 'Finished',
+                                            })}
+                                    </label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="archived-surveys" name="show-by-status" value={"archived"} defaultChecked={showStatus === "archived"}/>
+                                    <label htmlFor="archived-surveys">
+                                        {intl.formatMessage(
+                                            {
+                                                id: 'main.surveys.status.archived',
+                                                defaultMessage: 'Archived',
+                                            })}
+                                    </label>
+                                </div>
+                            </fieldset>
+                        </form>
+                        <form onChange={e => {
+                            setSortMethod(e.target.value)
+                            localStorage.setItem("sortMethod", e.target.value)
+                        }}>
+                            <fieldset className={"radio-group"}>
+                                <legend className={"toggle-header"} onClick={()=> {
+                                    setSortDirection(!sortDirection)
+                                    localStorage.setItem("sortDirection", JSON.stringify(!sortDirection))
+                                }} role="button" aria-pressed={sortDirection} aria-label={"Change Sort Direction"}>
+                                    {intl.formatMessage(
+                                        {
+                                            id: 'main.surveys.sort',
+                                            defaultMessage: 'Sort by',
+                                        })}
+                                    <span className={!sortDirection ? "asc sort-icon" : "desc sort-icon"}>
+                                        <SortOrderIcon />
+                                    </span>
+                                </legend>
+                                <div>
+                                    <input type="radio" id="sort-by-updated" name="sort-by" value={"updated"} defaultChecked={sortMethod === "updated"}/>
+                                    <label htmlFor="sort-by-updated">
+                                        {intl.formatMessage(
+                                            {
+                                                id: 'main.surveys.sort.updated',
+                                                defaultMessage: 'Updated',
+                                            })}
+                                    </label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="sort-by-alphabetical" name="sort-by" value={"alphabetical"} defaultChecked={sortMethod === "alphabetical"}/>
+                                    <label htmlFor="sort-by-alphabetical">
+                                        {intl.formatMessage(
+                                            {
+                                                id: 'main.surveys.sort.alphabetical',
+                                                defaultMessage: 'Alphabetical',
+                                            })}
+                                    </label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="sort-by-starttime" name="sort-by" value={"starttime"} defaultChecked={sortMethod === "starttime"}/>
+                                    <label htmlFor="sort-by-starttime">
+                                        {intl.formatMessage(
+                                            {
+                                                id: 'main.surveys.sort.starttime',
+                                                defaultMessage: 'Start Time',
+                                            })}
+                                    </label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="sort-by-endtime" name="sort-by" value={"endtime"} defaultChecked={sortMethod === "endtime"}/>
+                                    <label htmlFor="sort-by-endtime">
+                                        {intl.formatMessage(
+                                            {
+                                                id: 'main.surveys.sort.endtime',
+                                                defaultMessage: 'End Time',
+                                            })}
+                                    </label>
+                                </div>
+                            </fieldset>
+                        </form>
+                        <form disabled={sortMethod === "alphabetical"} onChange={e => {
+                            setGroupingSpan(e.target.value)
+                            localStorage.setItem("groupingSpan", e.target.value)
+                        }}>
+                            <fieldset className={"radio-group"}>
+                                <legend>{intl.formatMessage(
+                                    {
+                                        id: 'main.surveys.group',
+                                        defaultMessage: 'Group by',
+                                    })}
+                                </legend>
+                                <div>
+                                    <input type="radio" id="span-day" name="grouping-span" value={"day"} defaultChecked={groupingSpan === "day"}/>
+                                    <label htmlFor="span-day">
+                                        {intl.formatMessage(
+                                        {
+                                            id: 'main.surveys.group.day',
+                                            defaultMessage: 'Day',
+                                        })}
+                                    </label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="span-month" name="grouping-span" value={"month"} defaultChecked={groupingSpan === "month"}/>
+                                    <label htmlFor="span-month">
+                                        {intl.formatMessage(
+                                            {
+                                                id: 'main.surveys.group.month',
+                                                defaultMessage: 'Month',
+                                            })}
+                                    </label>
+                                </div>
+                                <div>
+                                    <input type="radio" id="span-year" name="grouping-span" value={"year"} defaultChecked={groupingSpan === "year"}/>
+                                    <label htmlFor="span-year">
+                                        {intl.formatMessage(
+                                            {
+                                                id: 'main.surveys.group.year',
+                                                defaultMessage: 'Year',
+                                            })}
+                                    </label>
+                                </div>
+                            </fieldset>
+                        </form>
+                    </div>
                 </div>
-                <input type={"text"} className={"search"} value={searchText}
-                       onChange={e => {
-                           setSearchText(e.target.value)
-                       }}
-                       placeholder={intl.formatMessage(
-                    {
-                        id: 'main.surveys.search.placeholder',
-                        defaultMessage: 'Search for survey',
-                    })}/>
-                <p className={"margin-left"}>{intl.formatMessage(
-                    {
-                        id: 'main.surveys.group',
-                        defaultMessage: 'Group by',
-                    })}
-                </p>
-                <select disabled={sortMethod === "alphabetical"} value={groupingSpan} onChange={e => {
-                    setGroupingSpan(e.target.value)
-                    localStorage.setItem("groupingSpan", e.target.value)
-                }}>
-                    <option value={"day"}>{intl.formatMessage(
+                <div className={"surveys-main"}>
+                    <div className={sortMethod === "alphabetical" ? "surveys surveys-container" : "surveys"}>
                         {
-                            id: 'main.surveys.group.day',
-                            defaultMessage: 'Day',
+                            status === "loading" ? <LoadingSkeleton /> :
+                                status === "error" ? <span>Error: {error.message}</span> :
+                                    <>
+                                        {!_.isEmpty(searchGroups) ?
+                                            sortMethod === "alphabetical" ?
+                                                searchData.map((survey) => (
+                                                    <Survey survey={survey} key={survey.id} refetch={()=>refetch()}/>
+                                                )) :
+                                                Object.keys(searchGroups).map((group, i) => (
+                                                    <SearchGroup searchGroups={searchGroups} group={group} groupingSpan={groupingSpan} key={i} refetch={()=>refetch()}/>
+                                                ))
+                                            :
+                                            <p>
+                                                {intl.formatMessage(
+                                                    {
+                                                        id: 'main.surveys.noSurveys',
+                                                        defaultMessage: 'No surveys to display.',
+                                                    })}
+                                            </p>}
+                                        {isFetching ? <div className={"loader-container"}><Loader /></div> : ""}
+                                    </>
                         }
-                    )}</option>
-                    <option value={"month"}>{intl.formatMessage(
-                        {
-                            id: 'main.surveys.group.month',
-                            defaultMessage: 'Month',
-                        }
-                    )}</option>
-                    <option value={"year"}>{intl.formatMessage(
-                        {
-                            id: 'main.surveys.group.year',
-                            defaultMessage: 'Year',
-                        }
-                    )}</option>
-                </select>
-            </div>
-            <div className={sortMethod === "alphabetical" ? "surveys surveys-container" : "surveys"}>
-                {
-                    status === "loading" ? <LoadingSkeleton /> :
-                    status === "error" ? <span>Error: {error.message}</span> :
-                    <>
-                        {searchGroups ?
-                            sortMethod === "alphabetical" ?
-                                searchData.map((survey) => (
-                                    <Survey survey={survey} key={survey.id} refetch={()=>refetch()}/>
-                                )) :
-                                Object.keys(searchGroups).map((group, i) => (
-                                    <SearchGroup searchGroups={searchGroups} group={group} groupingSpan={groupingSpan} key={i} refetch={()=>refetch()}/>
-
-                                ))
-                            :
-                            <p>
-                            {intl.formatMessage(
-                            {
-                                id: 'main.surveys.noSurveys',
-                                defaultMessage: 'No surveys to display.',
-                            })}
-                        </p>}
-                        {isFetching ? <div className={"loader-container"}><Loader /></div> : ""}
-                    </>
-                }
+                    </div>
+                </div>
             </div>
         </div>
     )
@@ -197,12 +344,13 @@ function SearchGroup({searchGroups, group, groupingSpan, refetch}) {
     const intl = useIntl()
     let date = new Date(formatDate(group))
     let dateDisplay
+    let locale = (intl.locale === "es" || intl.locale === "it") ? "en" : intl.locale
     switch (groupingSpan) {
         case "day":
-            dateDisplay = date.getDate() + " " + date.toLocaleString(intl.locale, { month: 'long' }) + " " + date.getFullYear()
+            dateDisplay = date.getDate() + " " + date.toLocaleString(locale, { month: 'long' }) + " " + date.getFullYear()
             break
         case "month":
-            dateDisplay = date.toLocaleString(intl.locale, { month: 'long' }) + " " + date.getFullYear()
+            dateDisplay = date.toLocaleString(locale, { month: 'long' }) + " " + date.getFullYear()
             break
         case "year":
             dateDisplay = date.getFullYear()
@@ -231,25 +379,19 @@ function SearchGroup({searchGroups, group, groupingSpan, refetch}) {
 
 function Survey({survey, refetch}) {
     const config = survey.config
-    const [showPopup, setShowPopup] = useState(false)
+    const [showDuplicatePopup, setShowDuplicatePopup] = useState(false)
+    const [showArchivePopup, setShowArchivePopup] = useState(false)
+    const [showDeletePopup, setShowDeletePopup] = useState(false)
     let startTime = new Date(formatDate(survey.starttime))
     let endTime = new Date(formatDate(survey.endtime))
-    let surveyName
-    const intl = useIntl()
-    switch (intl.locale) {
-        case "en":
-            surveyName = config.name.en
-            break
-        case "fi":
-            surveyName = config.name.fi
-            break
-        default:
-            surveyName = config.name.en
-    }
+    const surveyName = config.title
 
     return <>
         <Link to={`/survey/${survey.id}`} className={survey.status === "DRAFT" ? "survey draft" : "survey"}>
-            <OptionsPopUp survey={survey} setShowPopup={() => setShowPopup(true)}/>
+            <OptionsPopover surveyData={survey}
+                            setShowDuplicatePopup={() => setShowDuplicatePopup(true)}
+                            setShowArchivePopup={() => setShowArchivePopup(true)}
+                            setShowDeletePopup={() => setShowDeletePopup(true)}/>
             <h3>
                 {surveyName}
             </h3>
@@ -259,10 +401,116 @@ function Survey({survey, refetch}) {
             </p>
             <StatusText survey={survey}/>
         </Link>
-        {showPopup &&
-            <CopyPopup survey={survey} closePopup={()=>setShowPopup(false)} refetch={refetch}/>
+        {showDuplicatePopup &&
+            <CopyPopup survey={survey} closePopup={()=>setShowDuplicatePopup(false)} refetch={refetch}/>
+        }
+        {showArchivePopup &&
+            <ArchivePopup survey={survey} closePopup={()=>setShowArchivePopup(false)} refetch={refetch}/>
+        }
+        {showDeletePopup &&
+            <DeletePopup survey={survey} closePopup={()=>setShowDeletePopup(false)} refetch={refetch}/>
         }
     </>
+}
+
+function DeletePopup({survey, closePopup, refetch}) {
+    const surveyUpdate = UpdateSurveyWithId(survey.id)
+    const {authData} = useAuthData()
+    const intl = useIntl()
+
+    const deleteSurvey = () => {
+        const newSurveyData = {...survey}
+        newSurveyData.status = "DELETED"
+        newSurveyData.updatedby = authData.uid
+        newSurveyData.updated = updateTimeToServerFormat(new Date())
+        surveyUpdate.mutate(newSurveyData, {
+            // TODO: add toasts to describe what happened
+            onError: () => {
+                console.log("Setting Survey state to deleted failed")
+            },
+            onSuccess: () => {
+                console.log("Survey Deleted Succesfully")
+                closePopup()
+                refetch()
+            }
+        })
+    }
+
+    return <Popup closePopup={() => closePopup()}>
+        <h1>
+            {intl.formatMessage({
+                id: 'survey.delete.header',
+                defaultMessage: 'Delete Survey',
+            })}
+            <b> {survey.config.title}</b>
+        </h1>
+        <p>
+            {intl.formatMessage({
+                id: 'survey.delete.text',
+                defaultMessage: 'Are you sure you want to delete this survey?',
+            })}
+        </p>
+        <div className={"modal-options"}>
+            <button className={"cancel"} onClick={()=>closePopup()}>
+                {intl.formatMessage({
+                    id: 'modal.cancel',
+                    defaultMessage: 'Cancel',
+                })}
+            </button>
+            <button className={"confirm alert"} onClick={()=>deleteSurvey()}>
+                {intl.formatMessage({
+                    id: 'survey.delete',
+                    defaultMessage: 'Delete',
+                })}
+            </button>
+        </div>
+    </Popup>
+}
+
+function ArchivePopup({survey, closePopup, refetch}) {
+    const intl = useIntl()
+
+    const archiveSurvey = () => {
+        archiveSurveyWithId(survey.id).then( (response) => {
+            console.log(response)
+            console.log("Survey archived successfully")
+            closePopup()
+            refetch()
+        }).catch((error)=>{
+            console.log("Archiving survey failed.")
+            console.error(error)
+        })
+    }
+
+    return <Popup closePopup={() => closePopup()}>
+        <h1>
+            {intl.formatMessage({
+                id: 'survey.archive.header',
+                defaultMessage: 'Archive Survey',
+            })}
+            <b> {survey.config.title}</b>
+        </h1>
+        <p>
+            {intl.formatMessage({
+                id: 'survey.archive.text',
+                defaultMessage: 'Are you sure you want to archive this survey?',
+            })}
+        </p>
+        <div className={"modal-options"}>
+            <button className={"cancel"} onClick={()=>closePopup()}>
+                {intl.formatMessage({
+                    id: 'modal.cancel',
+                    defaultMessage: 'Cancel',
+                })}
+            </button>
+            <button className={"confirm"} onClick={()=>archiveSurvey()}>
+                {intl.formatMessage({
+                    id: 'survey.archive',
+                    defaultMessage: 'archive',
+                })}
+            </button>
+        </div>
+    </Popup>
 }
 
 function CopyPopup({survey, closePopup, refetch}) {
@@ -273,26 +521,13 @@ function CopyPopup({survey, closePopup, refetch}) {
     const [copySupportProviders, setCopySupportProviders] = useState(false)
     const supportProviders = GetUserBySurvey(survey.id)
     const intl = useIntl()
+    const {authData} = useAuthData()
 
     const duplicateSurvey = () => {
         const newSurveyData = {...survey}
-        for (const lang in newSurveyData.config.name) {
-            if (newSurveyData.config.name[lang].length === 0) {
-                let otherLangName
-                for (const otherLang in newSurveyData.config.name) {
-                    if (newSurveyData.config.name[otherLang].length !== 0) {
-                        otherLangName = newSurveyData.config.name[otherLang]
-                        break
-                    } else {
-                        otherLangName = ""
-                    }
-                }
-                newSurveyData.config.name[lang] = otherLangName
-            }
-            newSurveyData.config.name[lang] = "Copy of "+newSurveyData.config.name[lang]
-        }
+        newSurveyData.config.title = "Copy of "+newSurveyData.config.title
         newSurveyData.updated = updateTimeToServerFormat(new Date())
-        newSurveyData.updatedby = "Annie Survey Manager"
+        newSurveyData.updatedby = authData.uid
         newSurveyData.status = "DRAFT"
         newSurveyData.id = newID
         if (!copyRecipients) {
@@ -342,7 +577,7 @@ function CopyPopup({survey, closePopup, refetch}) {
                 id: 'survey.duplicate.header',
                 defaultMessage: 'Duplicate Survey',
             })}
-            <b> {survey.config.name[intl.locale]}</b>
+            <b> {survey.config.title}</b>
         </h1>
         <p>
             {intl.formatMessage({
@@ -380,14 +615,18 @@ function CopyPopup({survey, closePopup, refetch}) {
             <button className={"confirm"} onClick={()=>duplicateSurvey()}>
                 {intl.formatMessage({
                     id: 'survey.duplicate',
-                    defaultMessage: 'Monista',
+                    defaultMessage: 'Duplicate',
                 })}
             </button>
         </div>
     </Popup>
 }
 
-function OptionsPopUp({survey, setShowPopup}) {
+function OptionsPopover({setShowDuplicatePopup, setShowArchivePopup, setShowDeletePopup, surveyData}) {
+    const surveyIsFinished = surveyData.hasOwnProperty("status") && surveyData.status === "FINISHED"
+    const surveyIsDraft = surveyData.hasOwnProperty("status") && surveyData.status === "DRAFT"
+    const {currentUserData} = useCurrentUserData()
+    const isSuperUser = currentUserData.hasOwnProperty("superuser") && currentUserData.superuser
     const [popoverOpen, setPopoverOpen] = useState(false)
     const intl = useIntl()
 
@@ -402,16 +641,51 @@ function OptionsPopUp({survey, setShowPopup}) {
         </div>
         {popoverOpen &&
         <Popover closePopover={() => setPopoverOpen(false)}>
-            <div onClick={() => {
-                setShowPopup()
+            <p onClick={() => {
+                setShowDuplicatePopup()
             }}>
                 <DuplicateIcon />
                 {intl.formatMessage(
                     {
                         id: 'main.surveys.duplicate',
-                        defaultMessage: 'Duplicate',
+                        defaultMessage: 'Duplicate Survey',
                     })}
-            </div>
+            </p>
+            {surveyIsDraft &&
+            <p className={"red"} onClick={()=>setShowDeletePopup()}>
+                <DeleteIcon />
+                {intl.formatMessage(
+                    {
+                        id: 'survey.delete.draft',
+                        defaultMessage: 'Delete Draft',
+                    })}
+            </p>
+            }
+            {isSuperUser &&
+                surveyIsFinished ?
+            <p onClick={() => {
+                setShowArchivePopup()
+            }}>
+                <ArchiveIcon/>
+                {intl.formatMessage(
+                    {
+                        id: 'survey.archive.header',
+                        defaultMessage: 'Archive',
+                    })}
+            </p> :
+                <p className={"disabled"} title={intl.formatMessage(
+                    {
+                        id: 'survey.archive.disabledTitle',
+                        defaultMessage: 'Only finished surveys can be archived',
+                    })}>
+                    <ArchiveIcon/>
+                    {intl.formatMessage(
+                        {
+                            id: 'survey.archive.header',
+                            defaultMessage: 'Archive',
+                        })}
+                </p>
+            }
         </Popover>
         }
     </div>

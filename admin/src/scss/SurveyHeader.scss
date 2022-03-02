@@ -9,6 +9,11 @@
   margin: 2rem 2rem 0 2rem;
 }
 
+.tablet .survey-header {
+  flex-wrap: wrap;
+  padding-top: 2rem;
+}
+
 .survey-header > .back {
   margin-right: 2rem;
 }
@@ -19,11 +24,26 @@
 
 .survey-header .status {
   margin-left: 2rem;
+  white-space: nowrap;
 }
 
 .save-toolbar {
   display: flex;
   margin-left: auto;
+}
+
+.tablet .save-toolbar {
+  margin: 1.5rem 0 0 0;
+  flex-grow: 1;
+}
+
+.tablet .save-toolbar > button:not(.cancel) {
+  flex-grow: 1;
+}
+
+.tablet .save-toolbar .cancel {
+  margin: 0;
+  padding: 0 2rem;
 }
 
 .unsaved-changes {
@@ -43,6 +63,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  white-space: nowrap;
 }
 
 .save-toolbar button.save {
@@ -62,26 +83,8 @@
   color: $black;
 }
 
-.survey-summary-container {
-  margin-top: 2rem;
-}
-
-.survey-summary-container p {
-  margin-bottom: .5rem;
-}
-
-.fake-input {
-  border: $border;
-  border-radius: $admin-radius;
-  padding: .5rem 1rem;
-  margin-top: 0;
-  font-weight: 500;
-}
-
-.survey-summary-container .dual {
-  display: flex;
-}
-
-.survey-summary-container .dual > div:first-child {
-  margin-right: 1rem;
+.survey-header h3, .survey-header p.unsaved-changes {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
 }

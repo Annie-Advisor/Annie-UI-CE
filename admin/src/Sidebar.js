@@ -1,4 +1,4 @@
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import "./scss/Sidebar.scss"
 import {useIntl} from "react-intl";
 import {NavLink} from "react-router-dom";
@@ -8,16 +8,37 @@ import { ReactComponent as ContactsIcon } from "./svg/contacts.svg"
 import { ReactComponent as UsersIcon } from "./svg/users.svg"
 import { ReactComponent as ToggleSidebar } from "./svg/toggle.svg"
 import {ReactComponent as Logo} from "./svg/logo.svg";
+import useWindowDimensions from "./DataFunctions";
 
 export default function Sidebar() {
-    const [isSidebarOpen, toggleSidebarOpen] = useState(true)
+    const [sidebarOpen, setSidebarOpen] = useState( localStorage.getItem("sidebarOpen") ? JSON.parse(localStorage.getItem("sidebarOpen")) : true)
+    const {width} = useWindowDimensions()
+    const [windowTabletOrSmaller, setWindowTabletOrSmaller] = useState(false)
+    useEffect(()=>{
+        if (!windowTabletOrSmaller && width < 769) {
+            setSidebarOpen(false)
+            setWindowTabletOrSmaller(true)
+        }
+        if (windowTabletOrSmaller && width > 768) {
+            setSidebarOpen(true)
+            setWindowTabletOrSmaller(false)
+        }
+    },[width])
     const intl = useIntl()
-    if (!isSidebarOpen) {
+    if (!sidebarOpen) {
         return <div className={"sidebar closed"}>
             <h1>
-                <div className={"toggle-sidebar"} onClick={() => toggleSidebarOpen(!isSidebarOpen)}>
-                    <ToggleSidebar />
+            {!windowTabletOrSmaller ?
+            <div className={"toggle-sidebar"} onClick={() => {
+                localStorage.setItem("sidebarOpen", JSON.stringify(!sidebarOpen))
+                setSidebarOpen(!sidebarOpen)
+            }}>
+                <ToggleSidebar />
+            </div> :
+                <div className={"logo"}>
+
                 </div>
+            }
             </h1>
             <nav>
                 <ul>
@@ -45,7 +66,10 @@ export default function Sidebar() {
             <div className={"logo"}>
                 <Logo />
             </div>
-            <div className={"toggle-sidebar"} onClick={() => toggleSidebarOpen(!isSidebarOpen)}>
+            <div className={"toggle-sidebar"} onClick={() => {
+                localStorage.setItem("sidebarOpen", JSON.stringify(!sidebarOpen))
+                setSidebarOpen(!sidebarOpen)
+            }}>
                 <ToggleSidebar />
             </div>
         </h1>

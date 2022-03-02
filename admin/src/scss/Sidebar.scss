@@ -4,6 +4,8 @@
   flex-basis: 22rem;
   min-width: 22rem;
   border-right: 1px solid $light-grey-on-grey;
+  display: flex;
+  flex-direction: column;
 }
 
 .sidebar.closed {
@@ -13,7 +15,7 @@
 
 .sidebar h1 {
   margin: 0;
-  padding: 4rem 2rem 4rem 4rem;
+  padding: 4rem 2rem 4rem 3rem;
   font-weight: 600;
   font-size: 1.6rem;
   display:flex;
@@ -40,7 +42,7 @@
 
 .sidebar nav ul li a {
   cursor: pointer;
-  padding: 1rem 4rem;
+  padding: 1rem 3rem;
   line-height: 1.6;
   width: 100%;
   display: flex;

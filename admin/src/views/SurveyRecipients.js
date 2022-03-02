@@ -27,6 +27,7 @@ function SurveyRecipientsContent() {
     const [showContacts, setShowContacts] = useState(false)
     const [showEmptyConfirm, setShowEmptyConfirm] = useState(false)
     const [showSummary, setShowSummary] = useState(localStorage.getItem("showRecipientSummary") ? JSON.parse(localStorage.getItem("showRecipientSummary")) : true)
+    const limitedEditing = surveyData.status === "IN PROGRESS" || surveyData.status === "FINISHED"
 
     const removeStudentFromSurvey = (user) => {
         const newSurveyData = {...surveyData}
@@ -73,8 +74,6 @@ function SurveyRecipientsContent() {
     function filterUnique(value, index, self) {
         return self.indexOf(value) === index
     }
-
-    // TODO: show only 5-8 first + add maximize, and how many left
 
     const RenderSummary = () => {
         return summaryData.map((obj, i) => {
@@ -142,7 +141,7 @@ function SurveyRecipientsContent() {
             <> ({surveyContacts.length})</>
             }
             </span>
-            {surveyContacts && !surveyContacts.length < 1 &&
+            {surveyContacts && !surveyContacts.length < 1 && !limitedEditing &&
             <span className={"empty-list"}>
                 {!showEmptyConfirm ?
                 <button className={"text"} onClick={()=>setShowEmptyConfirm(true)}>
@@ -193,23 +192,26 @@ function SurveyRecipientsContent() {
                                 let name = getStudentName(student, intl)
                                 return <div className="block round" key={i}>
                                     <span>{name}</span>
+                                    {!limitedEditing &&
                                     <div className={"close-icon"} onClick={() => removeStudentFromSurvey(obj)}>
                                         <CloseIcon/>
                                     </div>
+                                    }
                                 </div>
                             })}
+                            {surveyContacts.length > 8 &&
                             <button className={"block round show-all"} onClick={()=>setShowContacts(!showContacts)}>
                                 {!showContacts ?
                                     <>
-                                    <Maximize />
+                                        <Maximize />
                                         {intl.formatMessage(
                                             {
                                                 id: 'showAll',
                                                 defaultMessage: 'Show All',
                                             })
-                                    }</> :
+                                        }</> :
                                     <>
-                                    <Minimize />
+                                        <Minimize />
                                         {intl.formatMessage(
                                             {
                                                 id: 'minimize',
@@ -218,6 +220,7 @@ function SurveyRecipientsContent() {
                                     </>
                                 }
                             </button>
+                            }
                         </div>
                     </div>
                     <h4>
@@ -260,7 +263,7 @@ function TableRender() {
     let contactHeaders = []
     for (let i = 0; i < contactsData.length; i++) {
         if (contactsData[i].hasOwnProperty("contact")) {
-            for (const [key] of Object.entries(contactsData[i].contact)) {
+            for (const [key] of Object.entries(contactsData[i]["contact"])) {
                 contactHeaders.indexOf(key) === -1 && contactHeaders.push(key)
             }
         }
@@ -419,6 +422,7 @@ function GlobalFilter({globalFilter, setGlobalFilter}) {
 
 function Table({columns, data}) {
     const {surveyData, setSurveyData} = useSurveyData()
+    const limitedEditing = surveyData.status === "IN PROGRESS" || surveyData.status === "FINISHED"
     const intl = useIntl()
 
     function DefaultColumnFilter({column: { filterValue, setFilter }}) {
@@ -485,19 +489,21 @@ function Table({columns, data}) {
         usePagination,
         useRowSelect,
         hooks => {
-            hooks.visibleColumns.push(columns => [
-                {
-                    id: 'selection',
-                    width: 36,
-                    Header: ({ getToggleAllRowsSelectedProps }) => (
-                        <IndeterminateCheckbox {...getToggleAllRowsSelectedProps()} />
-                    ),
-                    Cell: ({ row }) => (
-                        <IndeterminateCheckbox {...row.getToggleRowSelectedProps()} />
-                    ),
-                },
-                ...columns,
-            ])
+            if (!limitedEditing) {
+                hooks.visibleColumns.push(columns => [
+                    {
+                        id: 'selection',
+                        width: 36,
+                        Header: ({getToggleAllRowsSelectedProps}) => (
+                            <IndeterminateCheckbox {...getToggleAllRowsSelectedProps()} />
+                        ),
+                        Cell: ({row}) => (
+                            <IndeterminateCheckbox {...row.getToggleRowSelectedProps()} />
+                        ),
+                    },
+                    ...columns,
+                ])
+            }
         }
     )
 
@@ -542,22 +548,26 @@ function Table({columns, data}) {
                 globalFilter={state.globalFilter}
                 setGlobalFilter={setGlobalFilter}
             />
-            <button disabled={selectedFlatRows.map(row => row.original.id).length < 1} className={"remove"} onClick={()=>RemoveContactsFromSurvey()}>{intl.formatMessage(
-                {
-                    id: 'survey.contacts.removeFromSurvey',
-                    defaultMessage: '- Remove Selected',
-                })}
-                {selectedFlatRows && selectedFlatRows.length > 0 &&
-                <> ({selectedFlatRows.length})</>}
-            </button>
-            <button disabled={selectedFlatRows.map(row => row.original.id).length < 1} className={"add"} onClick={()=>AddContactsToSurvey()}>{intl.formatMessage(
-                {
-                    id: 'survey.contacts.addToSurvey',
-                    defaultMessage: '+ Add Selected',
-                })}
-                {selectedFlatRows && selectedFlatRows.length > 0 &&
-                <> ({selectedFlatRows.length})</>}
-            </button>
+            {!limitedEditing &&
+            <>
+                <button disabled={selectedFlatRows.map(row => row.original.id).length < 1} className={"remove"} onClick={()=>RemoveContactsFromSurvey()}>{intl.formatMessage(
+                    {
+                        id: 'survey.contacts.removeFromSurvey',
+                        defaultMessage: '- Remove Selected',
+                    })}
+                    {selectedFlatRows && selectedFlatRows.length > 0 &&
+                    <> ({selectedFlatRows.length})</>}
+                </button>
+                <button disabled={selectedFlatRows.map(row => row.original.id).length < 1} className={"add"} onClick={()=>AddContactsToSurvey()}>{intl.formatMessage(
+                    {
+                        id: 'survey.contacts.addToSurvey',
+                        defaultMessage: '+ Add Selected',
+                    })}
+                    {selectedFlatRows && selectedFlatRows.length > 0 &&
+                    <> ({selectedFlatRows.length})</>}
+                </button>
+            </>
+            }
         </div>
         <div className={"table-container"}>
             <table {...getTableProps()} className={"contact-table"}>

@@ -52,6 +52,11 @@
   margin-right: 1rem;
 }
 
+.needs-container {
+  display: flex;
+  flex-wrap: wrap;
+}
+
 .support-providers-container {
   margin-bottom: -1rem;
   display: flex;
@@ -66,7 +71,7 @@
   display: flex;
 }
 
-.new-support-need-container input[type="text"].add-element {
+.support-needs-container .new-support-need-container input[type="text"].add-element, .new-support-need-container input[type="text"].add-element {
   margin: 0;
   border: 1px solid $grey-on-grey;
   box-shadow: none;
@@ -95,7 +100,7 @@ button.commit:hover {
 .new-support-need-container button.commit {
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
-  width: 5.7rem;
+  width: 4.3rem;
   font-size: 1.6rem;
 }
 
@@ -155,7 +160,7 @@ button.commit:hover {
   margin-top: 0;
 }
 
-.support-needs-container .popup input[type="text"] {
+.popup input[type="text"] {
   margin-bottom: 1rem;
   font-size: 1.4rem;
   padding: 1rem 1.5rem;
@@ -172,7 +177,7 @@ button.support-provider.block.not-assigned.add-provider {
   cursor: pointer;
 }
 
-.support-needs-container .popup .block-container {
+.popup .block-container {
   max-height: 52vh;
   overflow-y: auto;
   border: $border;

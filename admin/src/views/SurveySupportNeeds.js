@@ -1,7 +1,7 @@
 import {useIntl} from "react-intl";
 import React, {useState} from "react";
 import '../scss/SurveySupportNeeds.scss';
-import {useCodesData, useSurveyData, useUserData, useUserSurveyData} from "./SurveyView";
+import {useCodesData, useCopiedUsersData, useSurveyData, useUserData, useUserSurveyData} from "./SurveyView";
 import _ from "lodash"
 import {getBranchIconColor, getMessageIcon, Popup, Toast} from "../UIElements";
 import {getNameWithAnnieUser, setBranchCategory, setSupportNeedStatus} from "../DataFunctions";
@@ -12,15 +12,10 @@ import {PostCodes} from "../api/APISurvey";
 import {ReactComponent as CloseIcon} from "../svg/close.svg";
 
 export default function SurveySupportNeeds() {
-    const {userSurveyData, setUserSurveyData} = useUserSurveyData()
     const {userData} = useUserData()
     const {surveyData} = useSurveyData()
     const {codesData} = useCodesData()
-    const [showPopup, setShowPopup] = useState(false)
-    const [copiedUsers, setCopiedUsers] = useState([])
-
     const intl = useIntl()
-    const surveyCoordinators = userSurveyData.filter(user => user.meta.coordinator)
     let branchesWithSupportNeed = []
     supportNeedCheck(surveyData.config, null, 1, null, null, null)
     function supportNeedCheck(data, parentColor, depth, parent, parentsParent, parentsParentsParent) {
@@ -51,6 +46,47 @@ export default function SurveySupportNeeds() {
     }
     let supportNeedCategoryGroups = _.groupBy(branchesWithSupportNeed, need => need.category)
 
+    return <>
+        <div className={"support-needs-container"}>
+            <h4>
+                {intl.formatMessage(
+                    {
+                        id: 'survey.supportNeeds',
+                        defaultMessage: 'Support Needs',
+                    })}
+            </h4>
+            {branchesWithSupportNeed.length > 0 ?
+                Object.keys(supportNeedCategoryGroups).map((group, i) => {
+                    return <div className={"support-need-group"} key={i}>
+                        <SupportNeedRender supportNeedCategoryGroups={supportNeedCategoryGroups} codesData={codesData} group={group} />
+                        <SupportProviders userData={userData} group={group} />
+                        <SupportBranchGroup supportNeedCategoryGroups={supportNeedCategoryGroups} group={group}/>
+                    </div>
+                })
+            :
+                <p className={"placeholder"}>
+                    {intl.formatMessage(
+                        {
+                            id: 'survey.supportNeeds.placeholder',
+                            defaultMessage: 'Your messages don\'t create any support needs currently. Start by activating a lifesaver in the message tab.',
+                        })}
+                </p>
+            }
+            <div>
+            </div>
+        </div>
+        <SurveyCoordinators />
+        </>
+}
+
+export function SurveyCoordinators() {
+    const intl = useIntl()
+    const {surveyData} = useSurveyData()
+    const {userSurveyData, setUserSurveyData} = useUserSurveyData()
+    const {userData} = useUserData()
+    const [showPopup, setShowPopup] = useState(false)
+    const surveyCoordinators = userSurveyData.filter(user => user.meta.coordinator)
+
     const setCoordinatorToSurvey = (user) => {
         const newUserSurveyData = [...userSurveyData]
         if (newUserSurveyData.some(obj => obj.annieuser === user.id)) {
@@ -77,34 +113,6 @@ export default function SurveySupportNeeds() {
     }
 
     return <>
-        <div className={"support-needs-container"}>
-            <h4>
-                {intl.formatMessage(
-                    {
-                        id: 'survey.supportNeeds',
-                        defaultMessage: 'Support Needs',
-                    })}
-            </h4>
-            {branchesWithSupportNeed.length > 0 ?
-                Object.keys(supportNeedCategoryGroups).map((group, i) => {
-                    return <div className={"support-need-group"} key={i}>
-                        <SupportNeedRender supportNeedCategoryGroups={supportNeedCategoryGroups} codesData={codesData} group={group} />
-                        <SupportProviders userData={userData} group={group} setCopiedUsers={setCopiedUsers} copiedUsers={copiedUsers}/>
-                        <SupportBranchGroup supportNeedCategoryGroups={supportNeedCategoryGroups} group={group}/>
-                    </div>
-                })
-            :
-                <p className={"placeholder"}>
-                    {intl.formatMessage(
-                        {
-                            id: 'survey.supportNeeds.placeholder',
-                            defaultMessage: 'Your messages don\'t create any support needs currently. Start by activating a lifesaver in the message tab.',
-                        })}
-                </p>
-            }
-            <div>
-            </div>
-        </div>
         <h4>
             {intl.formatMessage(
                 {
@@ -181,7 +189,7 @@ export default function SurveySupportNeeds() {
             </div>
         </Popup>
         }
-        </>
+    </>
 }
 
 function SupportBranchGroup({supportNeedCategoryGroups, group}) {
@@ -223,24 +231,25 @@ function SupportBranch({need}) {
 function SupportNeedRender({supportNeedCategoryGroups, codesData, group}) {
     const intl = useIntl()
     const [showPopup, setShowPopup] = useState(false)
+    let locale = (intl.locale === "es" || intl.locale === "it") ? "en" : intl.locale
 
     return <>
         <div className={"support-container"}>
             <div className={"icon"} title={intl.formatMessage(
                 {
-                    id: 'survey.supportNeeds.supportNeed',
-                    defaultMessage: 'Support Need',
+                    id: 'survey.supportTopic',
+                    defaultMessage: 'Support Topic',
                 })}>
                 <SupportIcon/>
             </div>
         {codesData.hasOwnProperty(group) ?
             <div className={"block"} onClick={() => setShowPopup(true)}>
-                {codesData[group][intl.locale]}
+                {codesData[group][locale]}
             </div> :
             <div className={"block not-assigned"} onClick={() => setShowPopup(true)}>
                 {intl.formatMessage({
-                    id: 'survey.assignSupportNeed',
-                    defaultMessage: '+ Assign Support Need',
+                    id: 'survey.chooseSupportNeed',
+                    defaultMessage: '+ Choose Support Topic',
                 })}
             </div>
         }
@@ -253,7 +262,7 @@ function SupportNeedRender({supportNeedCategoryGroups, codesData, group}) {
     </>
 }
 
-export function SupportNeedSelector({need, group, isGroup, closePopup, supportNeedCategoryGroups}) {
+export function SupportNeedSelector({need, group, isGroup, closePopup, supportNeedCategoryGroups, hideRemoveSupportNeed}) {
     const {surveyData, setSurveyData} = useSurveyData()
     const {codesData, setCodesData} = useCodesData()
     const [elementName, setElementName] = useState("")
@@ -330,11 +339,11 @@ export function SupportNeedSelector({need, group, isGroup, closePopup, supportNe
                 {supportNeedCategoryGroups[group].length > 1 ?
                     intl.formatMessage({
                         id: 'survey.assignNeedForAnswers',
-                        defaultMessage: 'Choose Support Need for Answers',
+                        defaultMessage: 'Choose Support Topic for Answers',
                     }) :
                     intl.formatMessage({
                         id: 'survey.assignNeedForAnswer',
-                        defaultMessage: 'Choose Support Need for Answer',
+                        defaultMessage: 'Choose Support Topic for Answer',
                     })
                 }
                 {supportNeedCategoryGroups[group].map((need,i) => {
@@ -349,8 +358,8 @@ export function SupportNeedSelector({need, group, isGroup, closePopup, supportNe
             </h1>
             <p>
                 {intl.formatMessage({
-                    id: 'survey.supportNeeds',
-                    defaultMessage: 'Support Needs',
+                    id: 'survey.supportTopics',
+                    defaultMessage: 'Support Topics',
                 })}
             </p>
             <div className={"block-container"}>
@@ -367,9 +376,8 @@ export function SupportNeedSelector({need, group, isGroup, closePopup, supportNe
                         id: 'survey.supportNeeds.createSupportNeed',
                         defaultMessage: 'Create New Support Need',
                     })}
-                    <span role="img" className={"not-found"} aria-label="not-found-yet" title={"This does not send data to database yet"}>🤷</span>
                 </p>
-                <form className={"new-support-need"} onSubmit={e => createNewCode(e)}>
+                <form className={"new-support-need"} onSubmit={elementName.length < 1 ? null : e => createNewCode(e)}>
                     <input type={"text"} className={"add-element"} value={elementName}
                            onChange={e => setElementName(e.target.value)}
                            placeholder={intl.formatMessage(
@@ -378,7 +386,10 @@ export function SupportNeedSelector({need, group, isGroup, closePopup, supportNe
                                    defaultMessage: 'Give your support need a descriptive name',
                                })}
                     />
-                    <button className={"commit"} type={"submit"}>+</button>
+                    {elementName.length < 1 ?
+                        <button className={"commit"} disabled title={intl.formatMessage({id:'survey.addTopic.noNameError',defaultMessage:'Give your topic a name'})}>+</button> :
+                        <button className={"commit"} type={"submit"}>+</button>
+                    }
                 </form>
             </div>
         </>
@@ -388,19 +399,19 @@ export function SupportNeedSelector({need, group, isGroup, closePopup, supportNe
         <h1>
             {intl.formatMessage({
                 id: 'survey.assignNeedForAnswer',
-                defaultMessage: 'Choose Support Need for Answer',
+                defaultMessage: 'Choose Support Topic for Answer',
             })}
             <b> {need.keyValue.slice(6)}</b>
         </h1>
         <p>
             {intl.formatMessage({
-                id: 'survey.supportNeeds',
-                defaultMessage: 'Support Needs',
+                id: 'survey.supportTopics',
+                defaultMessage: 'Support Topics',
             })}
         </p>
         <div className={"block-container"}>
             {Object.keys(codesData).map((key, i) => {
-                return <div className={codesData.hasOwnProperty(need.category) && need.category === key ? "block selected" : "block outlined"}
+                return <div className={codesData.hasOwnProperty(need.data[need.keyValue].category) && need.data[need.keyValue].category === key ? "block selected" : "block outlined"}
                             key={i} onClick={() => setSupportCategory(key)}>
                     {codesData[key][intl.locale]}
                 </div>
@@ -410,11 +421,10 @@ export function SupportNeedSelector({need, group, isGroup, closePopup, supportNe
             <p>
                 {intl.formatMessage({
                     id: 'survey.supportNeeds.createSupportNeed',
-                    defaultMessage: 'Create New Support Need',
+                    defaultMessage: 'Create New Support Topic',
                 })}
-                <span role="img" className={"not-found"} aria-label="not-found-yet" title={"This does not send data to database yet"}>🤷</span>
             </p>
-            <form className={"new-support-need"} onSubmit={e => createNewCode(e)}>
+            <form className={"new-support-need"} onSubmit={elementName < 1 ? null : e => createNewCode(e)}>
                 <input type={"text"} className={"add-element"} value={elementName}
                        onChange={e => setElementName(e.target.value)}
                        placeholder={intl.formatMessage(
@@ -423,12 +433,16 @@ export function SupportNeedSelector({need, group, isGroup, closePopup, supportNe
                                defaultMessage: 'Give your support need a descriptive name',
                            })}
                 />
-                <button className={"commit"} type={"submit"}>+</button>
+                {elementName < 1 ?
+                    <button className={"commit"} disabled title={intl.formatMessage({id:'survey.addTopic.noNameError',defaultMessage:'Give your topic a name'})}>+</button> :
+                    <button className={"commit"} type={"submit"}>+</button>
+                }
             </form>
         </div>
+        {!hideRemoveSupportNeed &&
         <div className={"remove-element"}>
             <p>
-                <span className={"red"} onClick={()=>removeSupportNeed()}>{intl.formatMessage({
+                <span className={"red"} onClick={() => removeSupportNeed()}>{intl.formatMessage({
                     id: 'survey.remove',
                     defaultMessage: 'Remove',
                 })}</span>
@@ -438,20 +452,90 @@ export function SupportNeedSelector({need, group, isGroup, closePopup, supportNe
                 })} {need.keyValue.slice(6)}
             </p>
         </div>
+        }
     </>
 }
 
-function SupportProviders({userData, group, setCopiedUsers, copiedUsers}) {
+function SupportProviders({userData, group}) {
     const {userSurveyData, setUserSurveyData} = useUserSurveyData()
-    const [tempUserSurveyData, setTempUserSurveyData] = useState([])
-    const {codesData} = useCodesData()
-    const {surveyData} = useSurveyData()
     const intl = useIntl()
     const [showPopup, setShowPopup] = useState(false)
+
+    const removeProviderFromSurvey = user => {
+        const newUserSurveyData = [...userSurveyData]
+        const userIndex = newUserSurveyData.findIndex(obj => obj.annieuser === user.annieuser)
+        delete newUserSurveyData[userIndex].meta.category[group]
+        setUserSurveyData(newUserSurveyData)
+    }
+
+    return <>
+        <div className={"support-container"}>
+            <div className={"icon"} title={intl.formatMessage(
+                {
+                    id: 'survey.supportNeeds.supportProvider',
+                    defaultMessage: 'Support Provider',
+                })}>
+                <ProviderIcon/>
+            </div>
+            <div className={"support-providers-container"}>
+                {userSurveyData.map((user, i) => {
+                    if (user.meta && user.meta.hasOwnProperty("category") && user.meta.category.hasOwnProperty(group)) {
+                        return <div className={"support-provider block"} key={i}>
+                            <span>{getNameWithAnnieUser(userData, user.annieuser)}</span>
+                            <div className={"close-icon"} onClick={() => removeProviderFromSurvey(user)}>
+                                <CloseIcon/>
+                            </div>
+                        </div>
+                    }
+                    return false
+                })}
+                {group ?
+                <button className="support-provider block not-assigned add-provider" onClick={() => {
+                    setShowPopup(true)
+                }}>
+                    {userSurveyData.filter(user => user.meta && user.meta.hasOwnProperty("category") && user.meta.category.hasOwnProperty(group)).length < 1 ?
+                        intl.formatMessage(
+                        {
+                            id: 'survey.supportNeeds.addSupportProvider',
+                            defaultMessage: '+ Add Support Provider',
+                        }) :
+                        intl.formatMessage(
+                            {
+                                id: 'survey.supportNeeds.editSupportProviders',
+                                defaultMessage: 'Edit Support Providers',
+                            })
+                    }
+                </button> :
+                    <p className={"placeholder"}>
+                        {intl.formatMessage(
+                            {
+                                id: 'survey.supportNeeds.addSupportProvider.placeholder',
+                                defaultMessage: 'Add support topic before providers',
+                            })}
+                    </p>
+                }
+            </div>
+        </div>
+        {showPopup &&
+        <Popup closePopup={() => setShowPopup(false)}>
+            <SupportProviderSelector group={group} hidePopup={()=>setShowPopup(false)}/>
+        </Popup>
+        }
+    </>
+}
+
+export function SupportProviderSelector({group, hidePopup}){
+    const intl = useIntl()
+    const {surveyData, setSurveyData} = useSurveyData()
+    const {userSurveyData, setUserSurveyData} = useUserSurveyData()
+    const [tempUserSurveyData, setTempUserSurveyData] = useState(_.cloneDeep(userSurveyData))
+    const {userData} = useUserData()
+    const {codesData} = useCodesData()
+    const {copiedUsersData, setCopiedUsersData} = useCopiedUsersData()
     const [searchText, setSearchText] = useState("")
-    let filterUserData = userData.filter(isIdOrName)
     const [showToast, setShowToast] = useState(false)
     const [toastText, setToastText] = useState("")
+    let filterUserData = userData.filter(isIdOrName)
 
     function isIdOrName(user) {
         if (user.hasOwnProperty("id") && user.id.toLowerCase().includes(searchText.toLowerCase())){
@@ -507,27 +591,20 @@ function SupportProviders({userData, group, setCopiedUsers, copiedUsers}) {
         setTempUserSurveyData(newUserSurveyData)
     }
 
-    const removeProviderFromSurvey = user => {
-        const newUserSurveyData = [...userSurveyData]
-        const userIndex = newUserSurveyData.findIndex(obj => obj.annieuser === user.annieuser)
-        delete newUserSurveyData[userIndex].meta.category[group]
-        setUserSurveyData(newUserSurveyData)
-    }
-
     const cancelProviderEdits = () => {
-        setShowPopup(false)
         setTempUserSurveyData([])
+        hidePopup()
     }
 
     const confirmProviderEdits = () => {
         setUserSurveyData([...tempUserSurveyData])
-        setShowPopup(false)
         setTempUserSurveyData([])
+        hidePopup()
     }
 
     const setUsersToCopy = () => {
         const copyUsers = tempUserSurveyData.filter(user => user.meta && user.meta.category &&user.meta.category[group])
-        setCopiedUsers(copyUsers)
+        setCopiedUsersData(copyUsers)
         setToastText(intl.formatMessage(
             {
                 id: 'survey.supportProvider.providersCopied',
@@ -538,7 +615,7 @@ function SupportProviders({userData, group, setCopiedUsers, copiedUsers}) {
 
     const pasteUsersToSupportNeed = () => {
         const newUserSurveyData = [...tempUserSurveyData]
-        copiedUsers.forEach(user => {
+        copiedUsersData.forEach(user => {
             if (newUserSurveyData.some(obj => obj.annieuser === user.annieuser)) {
                 const userIndex = newUserSurveyData.findIndex(obj => obj.annieuser === user.annieuser)
                 if (newUserSurveyData[userIndex].meta.hasOwnProperty("category")) {
@@ -572,138 +649,113 @@ function SupportProviders({userData, group, setCopiedUsers, copiedUsers}) {
         setShowToast(true)
     }
 
+    const clearUsersFromSupportNeed = () => {
+        const newUserSurveyData = [...tempUserSurveyData]
+        for (let i = 0; i < newUserSurveyData.length; i++) {
+            const user = newUserSurveyData[i]
+            if (user.hasOwnProperty("meta") && user.meta.hasOwnProperty("category") && user.meta.category.hasOwnProperty(group) && user.meta.category[group] ) {
+                delete newUserSurveyData[i].meta.category[group]
+            }
+        }
+        setTempUserSurveyData(newUserSurveyData)
+    }
+
     return <>
-        <div className={"support-container"}>
-            <div className={"icon"} title={intl.formatMessage(
-                {
-                    id: 'survey.supportNeeds.supportProvider',
-                    defaultMessage: 'Support Provider',
-                })}>
-                <ProviderIcon/>
-            </div>
-            <div className={"support-providers-container"}>
-                {userSurveyData.map((user, i) => {
-                    if (user.meta && user.meta.hasOwnProperty("category") && user.meta.category.hasOwnProperty(group)) {
-                        return <div className={"support-provider block"} key={i}>
-                            <span>{getNameWithAnnieUser(userData, user.annieuser)}</span>
-                            <div className={"close-icon"} onClick={() => removeProviderFromSurvey(user)}>
-                                <CloseIcon/>
-                            </div>
-                        </div>
-                    }
-                    return false
-                })}
-                <button className="support-provider block not-assigned add-provider" onClick={() => {
-                    setTempUserSurveyData(_.cloneDeep(userSurveyData))
-                    setShowPopup(true)
-                }}>
-                    {userSurveyData.filter(user => user.meta && user.meta.hasOwnProperty("category") && user.meta.category.hasOwnProperty(group)).length < 1 ?
-                        intl.formatMessage(
-                        {
-                            id: 'survey.supportNeeds.addSupportProvider',
-                            defaultMessage: '+ Add Support Provider',
-                        }) :
-                        intl.formatMessage(
-                            {
-                                id: 'survey.supportNeeds.editSupportProviders',
-                                defaultMessage: 'Edit Support Providers',
-                            })
-                    }
-                </button>
-            </div>
-        </div>
-        {showPopup &&
-        <Popup closePopup={() => cancelProviderEdits()}>
-            <h1>
-                {intl.formatMessage({
-                    id: 'survey.selectSupportProvidersForSupportNeed',
-                    defaultMessage: 'Select Support Providers for Support Need',
-                })}
-                <b> {codesData[group] ? codesData[group][intl.locale] : group}</b>
-            </h1>
-            <p>
-                {intl.formatMessage({
-                    id: 'main.sidebar.supportProviders',
-                    defaultMessage: 'Support Providers',
-                })}
-            </p>
-            <input type={"text"} className={"search"} value={searchText}
-                   onChange={e => {
-                       setSearchText(e.target.value)
-                   }}
-                   placeholder={intl.formatMessage(
-                       {
-                           id: 'supportProviders.search.placeholder',
-                           defaultMessage: 'Search for Support Provider',
-                       })}/>
-            <div className={"block-container"}>
-                {
-                    filterUserData.map((user, i) => {
-                        const userIndex = tempUserSurveyData.some(obj => obj.annieuser === user.id) && tempUserSurveyData.findIndex(obj => obj.annieuser === user.id)
-                        if ((userIndex || userIndex === 0) && tempUserSurveyData[userIndex].meta.hasOwnProperty("category") && tempUserSurveyData[userIndex].meta.category[group]) {
-                            return <div className={"block outlined support-provider selected"} key={i}
-                                        onClick={() => removeSupportProviderFromTemp(user)}>
-                                {
-                                    user.meta && user.meta.firstname && user.meta.lastname ?
-                                        user.meta.firstname + " " + user.meta.lastname :
-                                        user.id
-                                }
-                            </div>
-                        }
-                        return <div className={"block outlined"} key={i}
-                                    onClick={() => setSupportProviderToCategory(user)}>
+        <h1>
+            {intl.formatMessage({
+                id: 'survey.selectSupportProvidersForSupportNeed',
+                defaultMessage: 'Select Support Providers for Support Need',
+            })}
+            <b> {codesData[group] ? codesData[group][intl.locale] : group}</b>
+        </h1>
+        <p>
+            {intl.formatMessage({
+                id: 'main.sidebar.supportProviders',
+                defaultMessage: 'Support Providers',
+            })}
+        </p>
+        <input type={"text"} className={"search"} value={searchText}
+               onChange={e => {
+                   setSearchText(e.target.value)
+               }}
+               placeholder={intl.formatMessage(
+                   {
+                       id: 'supportProviders.search.placeholder',
+                       defaultMessage: 'Search for Support Provider',
+                   })}/>
+        <div className={"block-container"}>
+            {
+                filterUserData.map((user, i) => {
+                    const userIndex = tempUserSurveyData.some(obj => obj.annieuser === user.id) && tempUserSurveyData.findIndex(obj => obj.annieuser === user.id)
+                    if ((userIndex || userIndex === 0) && tempUserSurveyData[userIndex].meta.hasOwnProperty("category") && tempUserSurveyData[userIndex].meta.category[group]) {
+                        return <div className={"block outlined support-provider selected"} key={i}
+                                    onClick={() => removeSupportProviderFromTemp(user)}>
                             {
                                 user.meta && user.meta.firstname && user.meta.lastname ?
                                     user.meta.firstname + " " + user.meta.lastname :
                                     user.id
                             }
                         </div>
-                    })
-                }
-            </div>
-            {filterUserData.length < 1 &&
-            <p className={"placeholder"}>
+                    }
+                    return <div className={"block outlined"} key={i}
+                                onClick={() => setSupportProviderToCategory(user)}>
+                        {
+                            user.meta && user.meta.firstname && user.meta.lastname ?
+                                user.meta.firstname + " " + user.meta.lastname :
+                                user.id
+                        }
+                    </div>
+                })
+            }
+        </div>
+        {filterUserData.length < 1 &&
+        <p className={"placeholder"}>
+            {intl.formatMessage(
+                {
+                    id: 'supportProviders.nonFound.placeholder',
+                    defaultMessage: 'Sorry! No support providers found.',
+                })}
+        </p>
+        }
+        <div className={"modal-options"}>
+            <button className={"text"} onClick={()=>setUsersToCopy()}>
                 {intl.formatMessage(
                     {
-                        id: 'supportProviders.nonFound.placeholder',
-                        defaultMessage: 'Sorry! No support providers found.',
+                        id: 'copy',
+                        defaultMessage: 'Copy',
                     })}
-            </p>
+            </button>
+            {copiedUsersData.length > 0 &&
+            <button className={"text"} onClick={()=>pasteUsersToSupportNeed()}>
+                {intl.formatMessage(
+                    {
+                        id: 'paste',
+                        defaultMessage: 'Paste',
+                    })}
+            </button>
             }
-            <div className={"modal-options"}>
-                <button className={"text"} onClick={()=>setUsersToCopy()}>
-                    {intl.formatMessage(
-                        {
-                            id: 'copy',
-                            defaultMessage: 'Copy',
-                        })}
-                </button>
-                {copiedUsers.length > 0 &&
-                <button className={"text"} onClick={()=>pasteUsersToSupportNeed()}>
-                    {intl.formatMessage(
-                        {
-                            id: 'paste',
-                            defaultMessage: 'Paste',
-                        })}
-                </button>
-                }
-                <button className={"cancel"} onClick={()=>cancelProviderEdits()}>
-                    {intl.formatMessage(
-                        {
-                            id: 'modal.cancel',
-                            defaultMessage: 'Cancel',
-                        })}
-                </button>
-                <button onClick={()=>confirmProviderEdits()} className={"confirm"}>
-                    {intl.formatMessage(
-                        {
-                            id: 'select',
-                            defaultMessage: 'Select',
-                        })}
-                </button>
-            </div>
-        </Popup>
-        }
+            <button className={"text alert"} onClick={()=>clearUsersFromSupportNeed()}>
+                {intl.formatMessage(
+                    {
+                        id: 'clear',
+                        defaultMessage: 'Clear',
+                    })}
+            </button>
+            <button className={"cancel"} onClick={()=>cancelProviderEdits()}>
+                {intl.formatMessage(
+                    {
+                        id: 'modal.cancel',
+                        defaultMessage: 'Cancel',
+                    })}
+            </button>
+            <button onClick={()=>confirmProviderEdits()} className={"confirm"}>
+                {intl.formatMessage(
+                    {
+                        id: 'select',
+                        defaultMessage: 'Select',
+                    })}
+            </button>
+        </div>
         <Toast show={showToast} text={toastText} status={"success"} hideToast={()=>setShowToast(false)}/>
     </>
 }
