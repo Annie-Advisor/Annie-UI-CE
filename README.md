@@ -2,7 +2,7 @@
 
 ## What is Annie?
 
-Annie is a chatbot that nudges students at the right times to offer them help, lowering the threshold to ask and receive support. When the barriers to learning are removed, students feel better and their studies proceed. Annie is built by Annie Advisor Ltd, a startup based in Helsinki, Finland. 
+Annie is a chatbot that nudges students at the right times to offer them help, lowering the threshold to ask and receive support. When the barriers to learning are removed, students feel better and their studies proceed. Annie is built by Annie Advisor Ltd, a startup based in Helsinki, Finland.
 
 ## What does the Community Edition mean?
 
@@ -18,8 +18,9 @@ Read the announcement (available in Finnish and in Swedish):
 
 The Annie source code consists of two repositories:
 
-- [Annie UI](https://github.com/Annie-Advisor/Annie-API-CE): Frontend of the service consisting of two web applications, one for managing the system (Annie Admin) and one for support professionals to receive students' support requests (Annie App).
-- [Annie API](https://github.com/Annie-Advisor/Annie-API-CE): Backend of the service, consisting of database (Annie DB) and an application programming interface (Annie API).
+[Annie UI](https://github.com/Annie-Advisor/Annie-API-CE) consists of two React web applications, one for managing the system (Annie Admin) and one for support professionals to receive students' support requests (Annie App).
+
+[Annie API](https://github.com/Annie-Advisor/Annie-API-CE) is the backend of Annie, consisting of database (Annie DB) and an application programming interface (Annie API).
 
 Please note that full deployment of the Annie chatbot requires also external components, such as an SMS gateway. [Contact the development team for more details](https://www.annieadvisor.com/en/contact-us)
 
@@ -30,6 +31,17 @@ Please note that full deployment of the Annie chatbot requires also external com
 ## Is there a demo available?
 
 Absolutely! [Demo version](https://demo.annieadvisor.com) of Annie is available for you to test. [Drop us a message](https://www.annieadvisor.com/en/contact-us) and we'll provide you with the demo credentials. 
+
+## What does the Annie user interface look like?
+
+In Annie App, support providers can see the support requests sent by students:
+
+![Screenshot of Annie App](https://raw.githubusercontent.com/Annie-Advisor/Annie-UI-CE/main/screenshot_app.png)
+
+In Annie Admin, support coordinators can design and implement different kind of SMS student support interventions using the editor:
+
+![Screenshot of Annie Admin](https://raw.githubusercontent.com/Annie-Advisor/Annie-UI-CE/main/screenshot_admin.png)
+
 
 ## What next?
 
